@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { FunnelBoard } from "@/components/crm/FunnelBoard";
-import { ContactForm } from "@/components/crm/ContactForm";
 import { useToast } from "@/hooks/use-toast";
 
 const sampleStages = [
@@ -33,9 +32,9 @@ const sampleCards = [
   },
 ];
 
-const Index = () => {
+const Funnels = () => {
   const [cards, setCards] = React.useState(sampleCards);
-  const toast = useToast();
+  const { toast } = useToast();
 
   const handleCardMove = (cardId: string, newStageId: string) => {
     setCards((prev) =>
@@ -43,36 +42,25 @@ const Index = () => {
         card.id === cardId ? { ...card, stageId: newStageId } : card,
       ),
     );
-    toast.toast({
+    toast({
       title: "Card movido",
-      description: `O card foi movido para o estágio ${newStageId}`,
+      description: `O card foi movido para um novo estágio.`,
     });
   };
 
   const handleCardClick = (cardId: string) => {
-    toast.toast({
+    toast({
       title: "Card selecionado",
       description: `Você clicou no card ${cardId}`,
     });
   };
 
-  const handleContactSubmit = (data: any) => {
-    toast.toast({
-      title: "Contato salvo",
-      description: `Contato ${data.name} salvo com sucesso!`,
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-background p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">CRM - Funil de Vendas</h1>
+    <div>
+      <h1 className="text-3xl font-bold mb-6">Funil de Vendas</h1>
       <FunnelBoard stages={sampleStages} cards={cards} onCardMove={handleCardMove} onCardClick={handleCardClick} />
-      <div className="mt-10 max-w-md mx-auto">
-        <h2 className="text-xl font-semibold mb-4">Cadastrar Contato</h2>
-        <ContactForm onSubmit={handleContactSubmit} />
-      </div>
     </div>
   );
 };
 
-export default Index;
+export default Funnels;
