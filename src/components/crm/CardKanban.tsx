@@ -30,6 +30,12 @@ export function CardKanban({
     overdue: "bg-card border-2 border-red-500",
   };
 
+  const titleStatusClasses = {
+    default: "font-semibold",
+    due: "font-bold text-orange-600",
+    overdue: "font-bold text-red-600",
+  };
+
   return (
     <CardUI
       className={cn(
@@ -41,7 +47,7 @@ export function CardKanban({
       data-card-id={id}
     >
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+        <CardTitle className={cn("text-sm", titleStatusClasses[status])}>{title}</CardTitle>
         {contactName && (
           <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-1">
             <User size={14} />
