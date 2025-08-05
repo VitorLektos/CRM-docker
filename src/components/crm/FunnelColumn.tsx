@@ -6,11 +6,11 @@ import { CardKanban } from "./CardKanban";
 interface FunnelColumnProps {
   stageId: string;
   stageName: string;
+  stageColor: { bg: string; text: string };
   cards: Array<{
     id: string;
     title: string;
-    description?: string;
-    assignedTo?: string;
+    contactName?: string;
     tasksCount?: number;
     tasksDoneCount?: number;
   }>;
@@ -21,6 +21,7 @@ interface FunnelColumnProps {
 export function FunnelColumn({
   stageId,
   stageName,
+  stageColor,
   cards,
   onCardClick,
   onDropCard,
@@ -39,12 +40,14 @@ export function FunnelColumn({
 
   return (
     <div
-      className="flex flex-col bg-muted rounded-md p-2 w-72 max-h-[80vh] overflow-y-auto"
+      className="flex flex-col bg-muted rounded-lg w-72 max-h-[80vh] flex-shrink-0"
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <h3 className="font-semibold mb-2">{stageName}</h3>
-      <div className="space-y-2">
+      <h3 className={`font-semibold p-3 rounded-t-lg ${stageColor.bg} ${stageColor.text}`}>
+        {stageName}
+      </h3>
+      <div className="p-2 space-y-2 overflow-y-auto">
         {cards.map((card) => (
           <div
             key={card.id}
@@ -54,8 +57,7 @@ export function FunnelColumn({
             <CardKanban
               id={card.id}
               title={card.title}
-              description={card.description}
-              assignedTo={card.assignedTo}
+              contactName={card.contactName}
               tasksCount={card.tasksCount}
               tasksDoneCount={card.tasksDoneCount}
               onClick={() => onCardClick && onCardClick(card.id)}
