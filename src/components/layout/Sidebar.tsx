@@ -1,13 +1,14 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
@@ -73,6 +74,7 @@ const SidebarHeader = ({ isCollapsed }: { isCollapsed: boolean }) => (
 
 export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onToggle: () => void }) {
   const isMobile = useIsMobile();
+  const { signOut } = useAuth();
 
   if (isMobile) {
     return (
@@ -104,6 +106,12 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onTog
                 ))}
               </nav>
             </div>
+            <div className="mt-auto p-4 border-t">
+                <Button variant="ghost" onClick={signOut} className="w-full justify-start">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sair</span>
+                </Button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -117,11 +125,20 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onTog
         <div className="flex-1 overflow-auto py-2">
           <NavLinks isCollapsed={isCollapsed} />
         </div>
-        <div className="mt-auto p-2 border-t">
-          <Button variant="outline" size="icon" onClick={onToggle} className="w-full">
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-            <span className="sr-only">Recolher menu</span>
-          </Button>
+        <div className="mt-auto p-2 border-t flex flex-col gap-2">
+            <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" onClick={signOut} className={cn("w-full", isCollapsed ? "justify-center" : "justify-start")}>
+                        <LogOut className="h-5 w-5" />
+                        {!isCollapsed && <span className="ml-3">Sair</span>}
+                    </Button>
+                </TooltipTrigger>
+                {isCollapsed && <TooltipContent side="right">Sair</TooltipContent>}
+            </Tooltip>
+            <Button variant="outline" size="icon" onClick={onToggle} className="w-full">
+                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                <span className="sr-only">Recolher menu</span>
+            </Button>
         </div>
       </div>
     </div>
