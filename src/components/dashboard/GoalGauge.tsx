@@ -39,9 +39,9 @@ export function GoalGauge({ value, goal }: GoalGaugeProps) {
               endAngle={0}
             >
               <defs>
-                <linearGradient id="goalGradient" x1="0" y1="1" x2="1" y2="0">
+                <linearGradient id="goalGradient" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#ef4444" /> {/* Red */}
-                  <stop offset="60%" stopColor="#f59e0b" /> {/* Amber */}
+                  <stop offset="50%" stopColor="#f59e0b" /> {/* Amber */}
                   <stop offset="100%" stopColor="#22c55e" /> {/* Green */}
                 </linearGradient>
               </defs>
