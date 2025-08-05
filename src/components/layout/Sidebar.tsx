@@ -1,14 +1,11 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, ChevronLeft, ChevronRight, LogOut, Shield } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
@@ -16,74 +13,66 @@ const navItems = [
   { to: "/contacts", icon: Users, label: "Contatos" },
   { to: "/calendar", icon: Calendar, label: "Calendário" },
   { to: "/goals", icon: Target, label: "Metas" },
-  { to: "/team", icon: Shield, label: "Equipe", adminOnly: true },
   { to: "/settings", icon: Settings, label: "Configurações" },
   { to: "/api", icon: Code, label: "API" },
 ];
 
-const NavLinks = ({ isMobile = false, isCollapsed = false }) => {
-  const { profile } = useAuth();
+const NavLinks = ({ isMobile = false }) => (
+  <nav className={`flex flex-col gap-2 ${isMobile ? 'p-4' : ''}`}>
+    {navItems.map(({ to, icon: Icon, label }) => {
+      const linkContent = (
+        <>
+          <Icon className="h-5 w-5" />
+          <span>{label}</span>
+        </>
+      );
 
-  return (
-    <nav className="flex flex-col gap-2 px-2">
-      {navItems.map(({ to, icon: Icon, label, adminOnly }) => {
-        if (adminOnly && profile?.role !== 'admin') {
-          return null;
-        }
-
-        const linkContent = (
-          <>
-            <Icon className="h-5 w-5" />
-            <span className={cn("truncate", isCollapsed && "hidden")}>{label}</span>
-          </>
+      if (isMobile) {
+        return (
+          <SheetClose asChild key={to}>
+            <NavLink
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                  isActive ? "bg-muted text-primary" : "text-muted-foreground"
+                }`
+              }
+            >
+              {linkContent}
+            </NavLink>
+          </SheetClose>
         );
+      }
 
-        const link = (
-          <NavLink
-            to={to}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                isCollapsed && "justify-center",
-                isActive ? "bg-muted text-primary" : "text-muted-foreground"
-              )
-            }
-          >
-            {linkContent}
-          </NavLink>
-        );
+      return (
+        <NavLink
+          key={to}
+          to={to}
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+              isActive ? "bg-muted text-primary" : "text-muted-foreground"
+            }`
+          }
+        >
+          {linkContent}
+        </NavLink>
+      );
+    })}
+  </nav>
+);
 
-        if (isMobile) {
-          return <SheetClose asChild key={to}>{link}</SheetClose>;
-        }
-
-        if (isCollapsed) {
-          return (
-            <Tooltip key={to} delayDuration={0}>
-              <TooltipTrigger asChild>{link}</TooltipTrigger>
-              <TooltipContent side="right">{label}</TooltipContent>
-            </Tooltip>
-          );
-        }
-
-        return React.cloneElement(link, { key: to });
-      })}
-    </nav>
-  );
-};
-
-const SidebarHeader = ({ isCollapsed }: { isCollapsed: boolean }) => (
-    <div className={cn("flex h-14 items-center border-b px-4 lg:h-[60px]", isCollapsed ? 'justify-center px-2' : 'lg:px-6')}>
+const SidebarHeader = () => (
+    <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <NavLink to="/" className="flex items-center gap-2 font-semibold">
             <Rocket className="h-6 w-6 text-primary" />
-            <span className={cn(isCollapsed && "hidden")}>Acelerador</span>
+            <span>Acelerador</span>
         </NavLink>
     </div>
 );
 
-export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onToggle: () => void }) {
+
+export function Sidebar() {
   const isMobile = useIsMobile();
-  const { signOut, profile } = useAuth();
 
   if (isMobile) {
     return (
@@ -95,34 +84,9 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onTog
         </SheetTrigger>
         <SheetContent side="left" className="w-[250px] p-0">
           <div className="flex h-full max-h-screen flex-col gap-2">
-            <SidebarHeader isCollapsed={false} />
+            <SidebarHeader />
             <div className="flex-1">
-              <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                {navItems.map(({ to, icon: Icon, label, adminOnly }) => {
-                  if (adminOnly && profile?.role !== 'admin') return null;
-                  return (
-                    <SheetClose asChild key={to}>
-                      <NavLink
-                        to={to}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                            isActive ? "bg-muted text-primary" : "text-muted-foreground"
-                          }`
-                        }
-                      >
-                        <Icon className="h-4 w-4" />
-                        {label}
-                      </NavLink>
-                    </SheetClose>
-                  )
-                })}
-              </nav>
-            </div>
-            <div className="mt-auto p-4 border-t">
-                <Button variant="ghost" onClick={signOut} className="w-full justify-start">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sair</span>
-                </Button>
+              <NavLinks isMobile />
             </div>
           </div>
         </SheetContent>
@@ -132,25 +96,10 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onTog
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
-      <div className="flex h-full max-h-screen flex-col">
-        <SidebarHeader isCollapsed={isCollapsed} />
-        <div className="flex-1 overflow-auto py-2">
-          <NavLinks isCollapsed={isCollapsed} />
-        </div>
-        <div className="mt-auto p-2 border-t flex flex-col gap-2">
-            <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" onClick={signOut} className={cn("w-full", isCollapsed ? "justify-center" : "justify-start")}>
-                        <LogOut className="h-5 w-5" />
-                        {!isCollapsed && <span className="ml-3">Sair</span>}
-                    </Button>
-                </TooltipTrigger>
-                {isCollapsed && <TooltipContent side="right">Sair</TooltipContent>}
-            </Tooltip>
-            <Button variant="outline" size="icon" onClick={onToggle} className="w-full">
-                {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                <span className="sr-only">Recolher menu</span>
-            </Button>
+      <div className="flex h-full max-h-screen flex-col gap-2">
+        <SidebarHeader />
+        <div className="flex-1">
+          <NavLinks />
         </div>
       </div>
     </div>

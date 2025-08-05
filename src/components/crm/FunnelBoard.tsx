@@ -23,10 +23,9 @@ interface FunnelBoardProps {
   cards: Card[];
   onCardClick?: (cardId: string) => void;
   onCardMove?: (cardId: string, newStageId: string) => void;
-  canMoveCards: boolean;
 }
 
-export function FunnelBoard({ stages, cards, onCardClick, onCardMove, canMoveCards }: FunnelBoardProps) {
+export function FunnelBoard({ stages, cards, onCardClick, onCardMove }: FunnelBoardProps) {
   const handleDropCard = (cardId: string, newStageId: string) => {
     if (onCardMove) {
       onCardMove(cardId, newStageId);
@@ -44,7 +43,6 @@ export function FunnelBoard({ stages, cards, onCardClick, onCardMove, canMoveCar
           cards={cards.filter((card) => card.stageId === stage.id)}
           onCardClick={onCardClick}
           onDropCard={handleDropCard}
-          canMoveCards={canMoveCards}
         />
       ))}
     </div>

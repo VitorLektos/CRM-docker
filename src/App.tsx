@@ -11,38 +11,28 @@ import Settings from "./pages/Settings";
 import ApiDocs from "./pages/ApiDocs";
 import CalendarPage from "./pages/Calendar";
 import Goals from "./pages/Goals";
-import TeamPage from "./pages/Team";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <Toaster />
+      <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/funnels" element={<Funnels />} />
-                <Route path="/contacts" element={<Contacts />} />
-                <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/goals" element={<Goals />} />
-                <Route path="/team" element={<TeamPage />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/api" element={<ApiDocs />} />
-              </Route>
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/funnels" element={<Funnels />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/api" element={<ApiDocs />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

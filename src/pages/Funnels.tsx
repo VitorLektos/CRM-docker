@@ -34,17 +34,36 @@ import {
   type Funnel,
   type HistoryEntry
 } from "@/data/sample-data";
-import { usePersistentState } from "@/hooks/use-persistent-state";
-import { usePermission } from "@/hooks/use-permission";
+
+const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+  const [state, setState] = React.useState<T>(() => {
+    try {
+      const storedValue = window.localStorage.getItem(key);
+      return storedValue ? JSON.parse(storedValue) : defaultValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+      return defaultValue;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state));
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
+    }
+  }, [key, state]);
+
+  return [state, setState];
+};
 
 const Funnels = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasPermission } = usePermission();
   const [funnels, setFunnels] = usePersistentState<Funnel[]>("funnels_data", sampleFunnels);
   const [stages, setStages] = usePersistentState<Stage[]>("stages_data", sampleStages);
   const [cards, setCards] = usePersistentState<CardData[]>("cards_data", sampleCards);
-  const [contacts] = usePersistentState<Contact[]>("contacts_data", sampleContacts);
+  const [contacts] = React.useState<Contact[]>(sampleContacts);
   const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(() => funnels[0]?.id || "");
   const [viewMode, setViewMode] = React.useState<'kanban' | 'list'>('kanban');
   
@@ -56,9 +75,6 @@ const Funnels = () => {
   const [currentCard, setCurrentCard] = React.useState<Partial<CardData> | null>(null);
 
   const { toast } = useToast();
-
-  const canCreateFunnels = hasPermission('funnels.create');
-  const canMoveCards = hasPermission('cards.move');
 
   React.useEffect(() => {
     const cardIdToOpen = location.state?.openCardId;
@@ -92,10 +108,6 @@ const Funnels = () => {
   };
 
   const handleCardMove = (cardId: string, newStageId: string) => {
-    if (!canMoveCards) {
-      toast({ title: "Acesso Negado", description: "Você não tem permissão para mover cards.", variant: "destructive" });
-      return;
-    }
     const cardToMove = cards.find(c => c.id === cardId);
     if (!cardToMove || cardToMove.stageId === newStageId) return;
 
@@ -294,7 +306,7 @@ const Funnels = () => {
               <Button onClick={handleNewCardClick}><Plus className="h-4 w-4 mr-2" />Novo Card</Button>
             </>
           )}
-          {canCreateFunnels && <Button onClick={() => setCreateFunnelOpen(true)} className={selectedFunnelId ? '' : 'ml-auto'}>Novo Funil</Button>}
+          <Button onClick={() => setCreateFunnelOpen(true)} className={selectedFunnelId ? '' : 'ml-auto'}>Novo Funil</Button>
         </div>
       </Header>
 
@@ -305,7 +317,6 @@ const Funnels = () => {
             cards={currentCards}
             onCardMove={handleCardMove}
             onCardClick={handleCardClick}
-            canMoveCards={canMoveCards}
           />
         ) : (
           <FunnelListView
@@ -318,7 +329,7 @@ const Funnels = () => {
         <Card className="flex flex-col items-center justify-center text-center p-10">
             <h2 className="text-xl font-semibold">Nenhum funil encontrado</h2>
             <p className="text-muted-foreground mt-2 mb-4">Crie seu primeiro funil para começar a organizar seus negócios.</p>
-            {canCreateFunnels && <Button onClick={() => setCreateFunnelOpen(true)}>Criar Primeiro Funil</Button>}
+            <Button onClick={() => setCreateFunnelOpen(true)}>Criar Primeiro Funil</Button>
         </Card>
       )}
 
