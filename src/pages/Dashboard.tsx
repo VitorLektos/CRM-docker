@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Header } from "@/components/layout/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
@@ -14,8 +15,9 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import { GoalGauge } from "@/components/dashboard/GoalGauge";
+import { sampleCards, sampleStages, type CardData, type Stage } from "@/data/sample-data";
 
-// Dados de exemplo para os gráficos
 const monthlyActivityData = [
   { month: "Jan", contatos: 65, negocios: 28 },
   { month: "Fev", contatos: 59, negocios: 48 },
@@ -34,29 +36,67 @@ const monthlyRevenueData = [
     { month: "Jun", receita: 5500 },
 ];
 
+const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+  const [state, setState] = React.useState<T>(() => {
+    try {
+      const storedValue = window.localStorage.getItem(key);
+      return storedValue ? JSON.parse(storedValue) : defaultValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+      return defaultValue;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state));
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
+    }
+  }, [key, state]);
+
+  return [state, setState];
+};
+
 const Dashboard = () => {
+  const [goal] = usePersistentState<number>('monthly_goal', 10000);
+  const [cards] = usePersistentState<CardData[]>("cards_data", sampleCards);
+  const [stages] = usePersistentState<Stage[]>("stages_data", sampleStages);
+
+  const currentRevenue = React.useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const closedStages = stages.filter(s => s.name.toLowerCase() === 'fechado');
+    const closedStageIds = closedStages.map(s => s.id);
+
+    if (closedStageIds.length === 0) return 0;
+
+    const closedCardsThisMonth = cards.filter(card => {
+      if (!closedStageIds.includes(card.stageId)) return false;
+
+      const currentStageName = stages.find(s => s.id === card.stageId)?.name;
+      if (!currentStageName) return false;
+
+      const closedEntry = card.history?.slice().reverse().find(h => h.description.includes(`para '${currentStageName}'`));
+      
+      const relevantDateStr = closedEntry?.date || card.createdAt;
+      const relevantDate = new Date(relevantDateStr);
+      
+      return relevantDate.getMonth() === currentMonth && relevantDate.getFullYear() === currentYear;
+    });
+
+    return closedCardsThisMonth.reduce((sum, card) => sum + (card.value || 0), 0);
+  }, [cards, stages]);
+
   return (
     <>
       <Header title="Dashboard" />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Novos Contatos</CardTitle>
-            <CardDescription>Este mês</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">56</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Negócios Fechados</CardTitle>
-            <CardDescription>Este mês</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">86</p>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2">
+            <GoalGauge value={currentRevenue} goal={goal} />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Tarefas Pendentes</CardTitle>
@@ -72,7 +112,7 @@ const Dashboard = () => {
             <CardDescription>Total faturado</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-xl font-semibold">R$ 5.500</p>
+            <p className="text-xl font-semibold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentRevenue)}</p>
           </CardContent>
         </Card>
       </div>

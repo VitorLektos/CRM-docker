@@ -1,0 +1,61 @@
+"use client";
+
+import * as React from "react";
+import { RadialBar, RadialBarChart, ResponsiveContainer, PolarAngleAxis } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+
+interface GoalGaugeProps {
+  value: number;
+  goal: number;
+}
+
+export function GoalGauge({ value, goal }: GoalGaugeProps) {
+  const percentage = goal > 0 ? Math.min((value / goal) * 100, 100) : 0;
+  const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
+
+  const data = [{ name: "goal", value: percentage }];
+
+  // Color goes from red (0) -> yellow (60) -> green (120)
+  const hue = (percentage / 100) * 120;
+  const fillColor = `hsl(${hue}, 70%, 50%)`;
+
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle>Termômetro de Metas</CardTitle>
+        <CardDescription>
+          Alcançado: {formattedValue} de {formattedGoal}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex items-center justify-center">
+        <div className="w-full h-48 relative">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadialBarChart
+              innerRadius="70%"
+              outerRadius="100%"
+              data={data}
+              startAngle={180}
+              endAngle={0}
+              barSize={30}
+            >
+              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+              <RadialBar
+                background
+                dataKey="value"
+                angleAxisId={0}
+                fill={fillColor}
+                cornerRadius={15}
+              />
+            </RadialBarChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl font-bold" style={{ color: fillColor }}>
+              {Math.round(percentage)}%
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
