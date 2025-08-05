@@ -12,6 +12,7 @@ interface CardKanbanProps {
   tasksCount?: number;
   tasksDoneCount?: number;
   status?: "default" | "due" | "overdue";
+  value?: number;
   onClick?: () => void;
 }
 
@@ -22,6 +23,7 @@ export function CardKanban({
   tasksCount = 0,
   tasksDoneCount = 0,
   status = "default",
+  value,
   onClick,
 }: CardKanbanProps) {
   const statusClasses = {
@@ -62,6 +64,11 @@ export function CardKanban({
         )}
       </CardHeader>
       <CardContent className={cn("text-xs", textStatusClasses[status])}>
+        {value !== undefined && (
+          <p className="font-semibold text-sm">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)}
+          </p>
+        )}
         {tasksCount > 0 && (
           <div className="mt-2 text-xs">
             Tarefas: {tasksDoneCount} / {tasksCount}

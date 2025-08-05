@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { FunnelBoard } from "@/components/crm/FunnelBoard";
+import { FunnelListView } from "@/components/crm/FunnelListView";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,11 +17,18 @@ import { CardFormDialog } from "@/components/crm/CardFormDialog";
 import { CreateStageDialog } from "@/components/crm/CreateStageDialog";
 import { EditFunnelDialog } from "@/components/crm/EditFunnelDialog";
 import { DeleteFunnelDialog } from "@/components/crm/DeleteFunnelDialog";
+import { FunnelViewToggle } from "@/components/crm/FunnelViewToggle";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card } from "@/components/ui/card";
 
 // Interfaces
+interface HistoryEntry {
+  id: string;
+  date: string;
+  description: string;
+}
+
 interface Task {
   id: string;
   text: string;
@@ -31,6 +39,8 @@ interface Task {
 interface Contact {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
 }
 
 interface CardData {
@@ -40,6 +50,10 @@ interface CardData {
   contactId?: string;
   tasks: Task[];
   stageId: string;
+  value: number;
+  source?: string;
+  createdAt: string;
+  history: HistoryEntry[];
 }
 
 interface Stage {
@@ -56,10 +70,10 @@ interface Funnel {
 
 // Sample Data
 const sampleContacts: Contact[] = [
-    { id: 'contact-1', name: 'João Silva' },
-    { id: 'contact-2', name: 'Maria Oliveira' },
-    { id: 'contact-3', name: 'Pedro Santos' },
-    { id: 'contact-4', name: 'Ana Costa' },
+    { id: 'contact-1', name: 'João Silva', email: 'joao.silva@example.com', phone: '(11) 98765-4321' },
+    { id: 'contact-2', name: 'Maria Oliveira', email: 'maria.o@example.com', phone: '(21) 91234-5678' },
+    { id: 'contact-3', name: 'Pedro Santos', email: 'pedro.santos@example.com', phone: '(31) 95555-5555' },
+    { id: 'contact-4', name: 'Ana Costa', email: 'ana.costa@example.com', phone: '(41) 94444-4444' },
 ];
 
 const stageColorStyles = [
@@ -87,9 +101,9 @@ const sampleStages: Stage[] = [
 ];
 
 const sampleCards: CardData[] = [
-  { id: "card-1", title: "Contato João", description: "Interessado no produto X", contactId: "contact-1", tasks: [{id: 'task-1', text: 'Follow-up call', completed: false, dueDate: '2024-09-10'}], stageId: "stage-1" },
-  { id: "card-2", title: "Contato Ana", description: "Aguardando resposta", contactId: "contact-4", tasks: [{id: 'task-2', text: 'Enviar proposta', completed: true}, {id: 'task-3', text: 'Agendar reunião', completed: false}], stageId: "stage-2" },
-  { id: "card-3", title: "Lead do Ebook", description: "Baixou o ebook de marketing", contactId: "contact-3", tasks: [], stageId: "stage-5" },
+  { id: "card-1", title: "Contato João", description: "Interessado no produto X", contactId: "contact-1", tasks: [{id: 'task-1', text: 'Follow-up call', completed: false, dueDate: '2024-09-10'}], stageId: "stage-1", value: 1500, source: "Indicação", createdAt: new Date(2024, 7, 1).toISOString(), history: [{ id: 'hist-1', date: new Date(2024, 7, 1).toISOString(), description: 'Card criado.' }] },
+  { id: "card-2", title: "Contato Ana", description: "Aguardando resposta", contactId: "contact-4", tasks: [{id: 'task-2', text: 'Enviar proposta', completed: true}, {id: 'task-3', text: 'Agendar reunião', completed: false}], stageId: "stage-2", value: 3200, source: "Website", createdAt: new Date(2024, 6, 28).toISOString(), history: [{ id: 'hist-2', date: new Date(2024, 6, 28).toISOString(), description: 'Card criado.' }] },
+  { id: "card-3", title: "Lead do Ebook", description: "Baixou o ebook de marketing", contactId: "contact-3", tasks: [], stageId: "stage-5", value: 500, source: "Marketing de Conteúdo", createdAt: new Date(2024, 7, 5).toISOString(), history: [{ id: 'hist-3', date: new Date(2024, 7, 5).toISOString(), description: 'Card criado.' }] },
 ];
 
 const Funnels = () => {
@@ -98,6 +112,7 @@ const Funnels = () => {
   const [cards, setCards] = React.useState<CardData[]>(sampleCards);
   const [contacts] = React.useState<Contact[]>(sampleContacts);
   const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(sampleFunnels[0]?.id || "");
+  const [viewMode, setViewMode] = React.useState<'kanban' | 'list'>('kanban');
   
   const [isCreateFunnelOpen, setCreateFunnelOpen] = React.useState(false);
   const [isCreateStageOpen, setCreateStageOpen] = React.useState(false);
@@ -108,15 +123,33 @@ const Funnels = () => {
 
   const { toast } = useToast();
 
+  const addHistoryEntry = (card: CardData, description: string): CardData => {
+    const newEntry: HistoryEntry = {
+      id: `hist-${Date.now()}`,
+      date: new Date().toISOString(),
+      description,
+    };
+    return { ...card, history: [...(card.history || []), newEntry] };
+  };
+
   const handleCardMove = (cardId: string, newStageId: string) => {
+    const cardToMove = cards.find(c => c.id === cardId);
+    if (!cardToMove || cardToMove.stageId === newStageId) return;
+
+    const oldStage = stages.find(s => s.id === cardToMove.stageId);
+    const newStage = stages.find(s => s.id === newStageId);
+    if (!oldStage || !newStage) return;
+
+    const updatedCard = addHistoryEntry(cardToMove, `Movido de '${oldStage.name}' para '${newStage.name}'.`);
+    
     setCards((prev) =>
       prev.map((card) =>
-        card.id === cardId ? { ...card, stageId: newStageId } : card
+        card.id === cardId ? { ...updatedCard, stageId: newStageId } : card
       )
     );
     toast({
       title: "Card movido",
-      description: "O card foi movido para um novo estágio.",
+      description: `O card foi movido para ${newStage.name}.`,
     });
   };
 
@@ -129,21 +162,28 @@ const Funnels = () => {
   };
 
   const handleNewCardClick = () => {
-    setCurrentCard({ stageId: currentStages[0]?.id || "", tasks: [] });
+    setCurrentCard({ stageId: currentStages[0]?.id || "", tasks: [], history: [] });
     setCardFormOpen(true);
   };
 
-  const handleSaveCard = (data: any) => {
+  const handleSaveCard = (data: any, initialData: any) => {
     const cardData = {
+      ...initialData,
       ...data,
       tasks: data.tasks?.map((t: any) => ({...t, dueDate: t.dueDate?.toISOString()})) || []
     };
 
     if (cardData.id) { // Update existing card
-      setCards(cards.map(c => c.id === cardData.id ? cardData : c));
+      const updatedCard = addHistoryEntry(cardData, 'Card atualizado.');
+      setCards(cards.map(c => c.id === cardData.id ? updatedCard : c));
       toast({ title: "Card atualizado!", description: `O card "${cardData.title}" foi salvo.` });
     } else { // Create new card
-      const newCard = { ...cardData, id: `card-${Date.now()}` };
+      const newCard: CardData = { 
+        ...cardData, 
+        id: `card-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        history: [{ id: `hist-${Date.now()}`, date: new Date().toISOString(), description: 'Card criado.' }]
+      };
       setCards([...cards, newCard]);
       toast({ title: "Card criado!", description: `O card "${newCard.title}" foi adicionado.` });
     }
@@ -264,6 +304,7 @@ const Funnels = () => {
     <>
       <Header title="Funis">
         <div className="flex items-center gap-2">
+          <FunnelViewToggle viewMode={viewMode} setViewMode={setViewMode} />
           <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId} disabled={funnels.length === 0}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Selecione um funil" />
@@ -289,12 +330,20 @@ const Funnels = () => {
       </Header>
 
       {funnels.length > 0 && selectedFunnelId ? (
-        <FunnelBoard
-          stages={currentStages}
-          cards={currentCards}
-          onCardMove={handleCardMove}
-          onCardClick={handleCardClick}
-        />
+        viewMode === 'kanban' ? (
+          <FunnelBoard
+            stages={currentStages}
+            cards={currentCards}
+            onCardMove={handleCardMove}
+            onCardClick={handleCardClick}
+          />
+        ) : (
+          <FunnelListView
+            stages={currentStages}
+            cards={currentCards}
+            onCardClick={handleCardClick}
+          />
+        )
       ) : (
         <Card className="flex flex-col items-center justify-center text-center p-10">
             <h2 className="text-xl font-semibold">Nenhum funil encontrado</h2>
