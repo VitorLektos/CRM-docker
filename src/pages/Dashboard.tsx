@@ -115,7 +115,7 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Leads Ativos</CardTitle>
             <CardDescription>Negócios em andamento</CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <p className="text-xl font-semibold">{activeLeads}</p>
           </CardContent>
