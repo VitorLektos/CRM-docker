@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, GripVertical } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 function SortableStageItem({ id, onRemove }: { id: string; onRemove: (id: string) => void }) {
   const {
@@ -73,6 +73,7 @@ export function CreateFunnelDialog({ isOpen, onOpenChange, onCreate }: CreateFun
   const [name, setName] = React.useState("");
   const [stageName, setStageName] = React.useState("");
   const [stages, setStages] = React.useState<string[]>(["Novo", "Contato Feito", "Proposta", "Fechado"]);
+  const { toast } = useToast();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -93,10 +94,25 @@ export function CreateFunnelDialog({ isOpen, onOpenChange, onCreate }: CreateFun
   };
 
   const handleCreate = () => {
-    if (name.trim() && stages.length > 0) {
-      onCreate(name.trim(), stages);
-      onOpenChange(false);
+    if (!name.trim()) {
+      toast({
+        title: "Nome do funil é obrigatório",
+        description: "Por favor, insira um nome para o funil antes de criar.",
+        variant: "destructive",
+      });
+      return;
     }
+    if (stages.length === 0) {
+      toast({
+        title: "Funil precisa de estágios",
+        description: "Por favor, adicione pelo menos um estágio ao funil.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    onCreate(name.trim(), stages);
+    onOpenChange(false);
   };
   
   React.useEffect(() => {
@@ -179,7 +195,7 @@ export function CreateFunnelDialog({ isOpen, onOpenChange, onCreate }: CreateFun
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleCreate} disabled={!name.trim() || stages.length === 0}>
+          <Button type="submit" onClick={handleCreate}>
             Criar Funil
           </Button>
         </DialogFooter>
