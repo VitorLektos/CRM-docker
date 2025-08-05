@@ -1,11 +1,23 @@
 "use client";
 
-import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, BookUser } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, BookUser, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
@@ -71,6 +83,39 @@ const SidebarHeader = () => (
     </div>
 );
 
+const LogoutButton = () => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground hover:text-primary">
+          <LogOut className="h-5 w-5" />
+          <span>Sair</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Sua sessão será encerrada e você precisará fazer login novamente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleLogout}>Sair</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
+
 
 export function Sidebar() {
   const isMobile = useIsMobile();
@@ -83,12 +128,13 @@ export function Sidebar() {
             <Menu className="h-5 w-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[250px] p-0">
-          <div className="flex h-full max-h-screen flex-col gap-2">
-            <SidebarHeader />
-            <div className="flex-1">
-              <NavLinks isMobile />
-            </div>
+        <SheetContent side="left" className="w-[250px] p-0 flex flex-col">
+          <SidebarHeader />
+          <div className="flex-1">
+            <NavLinks isMobile />
+          </div>
+          <div className="mt-auto p-4 border-t">
+            <LogoutButton />
           </div>
         </SheetContent>
       </Sheet>
@@ -101,6 +147,9 @@ export function Sidebar() {
         <SidebarHeader />
         <div className="flex-1">
           <NavLinks />
+        </div>
+        <div className="mt-auto p-4 border-t">
+          <LogoutButton />
         </div>
       </div>
     </div>
