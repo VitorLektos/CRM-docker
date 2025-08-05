@@ -6,8 +6,7 @@ import { FunnelColumn } from "./FunnelColumn";
 interface Card {
   id: string;
   title: string;
-  description?: string;
-  assignedTo?: string;
+  contactName?: string;
   tasksCount?: number;
   tasksDoneCount?: number;
   stageId: string;
@@ -16,6 +15,7 @@ interface Card {
 interface Stage {
   id: string;
   name: string;
+  color: { bg: string; text: string };
 }
 
 interface FunnelBoardProps {
@@ -39,6 +39,7 @@ export function FunnelBoard({ stages, cards, onCardClick, onCardMove }: FunnelBo
           key={stage.id}
           stageId={stage.id}
           stageName={stage.name}
+          stageColor={stage.color}
           cards={cards.filter((card) => card.stageId === stage.id)}
           onCardClick={onCardClick}
           onDropCard={handleDropCard}
