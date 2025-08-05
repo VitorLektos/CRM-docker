@@ -37,9 +37,9 @@ import { CalendarIcon, PlusCircle, Trash2, Mail, Phone, User, Clock } from "luci
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { TaskPriority } from "@/data/sample-data";
+import { TaskPriority, CardData, Contact, HistoryEntry } from "@/data/sample-data";
 
-const priorities: TaskPriority[] = ["Baixa", "Média", "Alta", "Urgente"];
+const priorities = ["Baixa", "Média", "Alta", "Urgente"] as const;
 
 const taskSchema = z.object({
   id: z.string(),
@@ -66,34 +66,6 @@ const cardSchema = z.object({
 });
 
 type CardFormValues = z.infer<typeof cardSchema>;
-
-interface HistoryEntry {
-  id: string;
-  date: string;
-  description: string;
-}
-
-interface CardData {
-  id: string;
-  title: string;
-  companyName?: string;
-  businessType?: string;
-  description?: string;
-  contactId?: string;
-  tasks: Array<z.infer<typeof taskSchema>>;
-  stageId: string;
-  value?: number;
-  source?: string;
-  createdAt?: string;
-  history?: HistoryEntry[];
-}
-
-interface Contact {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-}
 
 interface CardFormDialogProps {
   isOpen: boolean;

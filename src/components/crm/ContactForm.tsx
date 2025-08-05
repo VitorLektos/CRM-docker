@@ -89,10 +89,10 @@ export function ContactForm({ initialValues, onSubmit, isLoading, isEdit = false
           )} />
         </div>
         <FormField control={form.control} name="companyUrl" render={({ field }) => (
-          <FormItem><FormLabel>URL da Empresa</FormLabel><FormControl><Input placeholder="https://exemplo.com" {...field} /></FormControl><FormMessage /></FormMessage>
+          <FormItem><FormLabel>URL da Empresa</FormLabel><FormControl><Input placeholder="https://exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <FormField control={form.control} name="address" render={({ field }) => (
-          <FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua, Número, Cidade, Estado" {...field} /></FormControl><FormMessage /></FormMessage>
+          <FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua, Número, Cidade, Estado" {...field} /></FormControl><FormMessage /></FormItem>
         )} />
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Salvando..." : (isEdit ? "Salvar Alterações" : "Salvar Contato")}
