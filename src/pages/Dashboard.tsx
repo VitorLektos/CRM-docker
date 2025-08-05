@@ -1,5 +1,6 @@
 "use client";
 
+import { Header } from "@/components/layout/Header";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
   Bar,
@@ -35,9 +36,9 @@ const monthlyRevenueData = [
 
 const Dashboard = () => {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+    <>
+      <Header title="Dashboard" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle>Novos Contatos</CardTitle>
@@ -130,7 +131,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </>
   );
 };
 

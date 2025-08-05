@@ -1,6 +1,8 @@
 "use client";
 
 import { ContactForm } from "@/components/crm/ContactForm";
+import { Header } from "@/components/layout/Header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
 const Contacts = () => {
@@ -15,14 +17,27 @@ const Contacts = () => {
   };
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Contatos</h1>
-      <div className="max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Cadastrar Novo Contato</h2>
-        <ContactForm onSubmit={handleContactSubmit} />
+    <>
+      <Header title="Contatos" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Cadastrar Novo Contato</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ContactForm onSubmit={handleContactSubmit} />
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-4">
+            <CardHeader>
+                <CardTitle>Lista de Contatos</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-center text-muted-foreground">A lista de contatos aparecerá aqui.</p>
+            </CardContent>
+        </Card>
       </div>
-      {/* A list of existing contacts would go here */}
-    </div>
+    </>
   );
 };
 

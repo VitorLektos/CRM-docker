@@ -1,5 +1,6 @@
 "use client";
 
+import { Header } from "@/components/layout/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +8,8 @@ import { Button } from "@/components/ui/button";
 
 const Settings = () => {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Configurações</h1>
+    <>
+      <Header title="Configurações" />
       <Card>
         <CardHeader>
           <CardTitle>Personalização</CardTitle>
@@ -25,7 +26,7 @@ const Settings = () => {
           <Button>Salvar Alterações</Button>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 

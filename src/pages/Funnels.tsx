@@ -15,6 +15,7 @@ import { CreateFunnelDialog } from "@/components/crm/CreateFunnelDialog";
 import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
 import { CreateStageDialog } from "@/components/crm/CreateStageDialog";
 import { Plus } from "lucide-react";
+import { Header } from "@/components/layout/Header";
 
 // Interfaces
 interface Card {
@@ -132,31 +133,28 @@ const Funnels = () => {
   const currentCards = cards.filter((card) => currentStageIds.includes(card.stageId));
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h1 className="text-3xl font-bold">Funis</h1>
-        <div className="flex items-center gap-2">
-          <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId} disabled={funnels.length === 0}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Selecione um funil" />
-            </SelectTrigger>
-            <SelectContent>
-              {funnels.map((funnel) => (
-                <SelectItem key={funnel.id} value={funnel.id}>
-                  {funnel.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedFunnelId && (
-            <Button variant="outline" onClick={() => setCreateStageOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Estágio
-            </Button>
-          )}
-          <Button onClick={() => setCreateFunnelOpen(true)}>Novo Funil</Button>
-        </div>
-      </div>
+    <>
+      <Header title="Funis">
+        <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId} disabled={funnels.length === 0}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Selecione um funil" />
+          </SelectTrigger>
+          <SelectContent>
+            {funnels.map((funnel) => (
+              <SelectItem key={funnel.id} value={funnel.id}>
+                {funnel.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedFunnelId && (
+          <Button variant="outline" onClick={() => setCreateStageOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Estágio
+          </Button>
+        )}
+        <Button onClick={() => setCreateFunnelOpen(true)}>Novo Funil</Button>
+      </Header>
 
       {funnels.length > 0 && selectedFunnelId ? (
         <FunnelBoard
@@ -166,11 +164,11 @@ const Funnels = () => {
           onCardClick={handleCardClick}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center text-center p-10 border-2 border-dashed rounded-lg">
+        <Card className="flex flex-col items-center justify-center text-center p-10">
             <h2 className="text-xl font-semibold">Nenhum funil encontrado</h2>
             <p className="text-muted-foreground mt-2 mb-4">Crie seu primeiro funil para começar a organizar seus negócios.</p>
             <Button onClick={() => setCreateFunnelOpen(true)}>Criar Primeiro Funil</Button>
-        </div>
+        </Card>
       )}
 
 
@@ -191,7 +189,7 @@ const Funnels = () => {
         onOpenChange={(isOpen) => !isOpen && setSelectedCard(null)}
         card={selectedCard}
       />
-    </div>
+    </>
   );
 };
 

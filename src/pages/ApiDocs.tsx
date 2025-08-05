@@ -1,11 +1,12 @@
 "use client";
 
+import { Header } from "@/components/layout/Header";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const ApiDocs = () => {
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-6">Documentação da API</h1>
+    <>
+      <Header title="Documentação da API" />
       <Card>
         <CardHeader>
           <CardTitle>Endpoints</CardTitle>
@@ -20,7 +21,7 @@ const ApiDocs = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, X } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
@@ -59,6 +59,16 @@ const NavLinks = ({ isMobile = false }) => (
   </nav>
 );
 
+const SidebarHeader = () => (
+    <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <NavLink to="/" className="flex items-center gap-2 font-semibold">
+            <Package className="h-6 w-6" />
+            <span>CRM</span>
+        </NavLink>
+    </div>
+);
+
+
 export function Sidebar() {
   const isMobile = useIsMobile();
 
@@ -72,9 +82,7 @@ export function Sidebar() {
         </SheetTrigger>
         <SheetContent side="left" className="w-[250px] p-0">
           <div className="flex h-full max-h-screen flex-col gap-2">
-            <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-              <h1 className="text-lg font-semibold">CRM</h1>
-            </div>
+            <SidebarHeader />
             <div className="flex-1">
               <NavLinks isMobile />
             </div>
@@ -87,9 +95,7 @@ export function Sidebar() {
   return (
     <div className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <h1 className="text-lg font-semibold">CRM</h1>
-        </div>
+        <SidebarHeader />
         <div className="flex-1">
           <NavLinks />
         </div>
