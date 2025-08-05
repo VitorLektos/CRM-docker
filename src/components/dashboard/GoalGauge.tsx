@@ -14,11 +14,11 @@ export function GoalGauge({ value, goal }: GoalGaugeProps) {
   const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   const formattedGoal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(goal);
 
-  const data = [{ name: "goal", value: percentage, full: 100 }];
+  const data = [{ name: "goal", value: percentage }];
 
-  // Color goes from red (0) -> yellow (60) -> green (120)
+  // Color for the text, matching the approximate color at the end of the progress
   const hue = (percentage / 100) * 120;
-  const fillColor = `hsl(${hue}, 70%, 50%)`;
+  const textColor = `hsl(${hue}, 70%, 50%)`;
 
   return (
     <Card className="h-full">
@@ -32,33 +32,32 @@ export function GoalGauge({ value, goal }: GoalGaugeProps) {
         <div className="w-full h-56 relative">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
-              innerRadius="85%"
+              innerRadius="70%"
               outerRadius="100%"
               data={data}
               startAngle={180}
               endAngle={0}
             >
+              <defs>
+                <linearGradient id="goalGradient" x1="0" y1="1" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#ef4444" /> {/* Red */}
+                  <stop offset="60%" stopColor="#f59e0b" /> {/* Amber */}
+                  <stop offset="100%" stopColor="#22c55e" /> {/* Green */}
+                </linearGradient>
+              </defs>
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
               
-              {/* Background Track Bar */}
               <RadialBar
-                dataKey="full"
-                fill="hsl(var(--muted))"
-                cornerRadius={10}
-                background={false}
-              />
-
-              {/* Progress Bar */}
-              <RadialBar
+                background={{ fill: 'hsl(var(--muted))' }}
                 dataKey="value"
-                fill={fillColor}
+                angleAxisId={0}
+                fill="url(#goalGradient)"
                 cornerRadius={10}
-                background={false}
               />
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-semibold" style={{ color: fillColor }}>
+            <span className="text-3xl font-bold" style={{ color: textColor }}>
               {Math.round(percentage)}%
             </span>
           </div>
