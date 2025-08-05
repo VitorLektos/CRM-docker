@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { Auth, ThemeSupa } from "@supabase/auth-ui-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Rocket } from "lucide-react";
