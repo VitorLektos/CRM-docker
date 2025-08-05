@@ -63,31 +63,60 @@ const Dashboard = () => {
   const [cards] = usePersistentState<CardData[]>("cards_data", sampleCards);
   const [stages] = usePersistentState<Stage[]>("stages_data", sampleStages);
 
-  const currentRevenue = React.useMemo(() => {
+  const {
+    currentRevenue,
+    activeLeads,
+    wonLeads,
+    leadsWithoutTasks,
+    leadSources,
+    pendingTasks,
+  } = React.useMemo(() => {
+    const closedStageIds = stages.filter(s => s.name.toLowerCase() === 'fechado').map(s => s.id);
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const closedStages = stages.filter(s => s.name.toLowerCase() === 'fechado');
-    const closedStageIds = closedStages.map(s => s.id);
-
-    if (closedStageIds.length === 0) return 0;
-
     const closedCardsThisMonth = cards.filter(card => {
       if (!closedStageIds.includes(card.stageId)) return false;
-
       const currentStageName = stages.find(s => s.id === card.stageId)?.name;
       if (!currentStageName) return false;
-
       const closedEntry = card.history?.slice().reverse().find(h => h.description.includes(`para '${currentStageName}'`));
-      
       const relevantDateStr = closedEntry?.date || card.createdAt;
       const relevantDate = new Date(relevantDateStr);
-      
       return relevantDate.getMonth() === currentMonth && relevantDate.getFullYear() === currentYear;
     });
 
-    return closedCardsThisMonth.reduce((sum, card) => sum + (card.value || 0), 0);
+    const _currentRevenue = closedCardsThisMonth.reduce((sum, card) => sum + (card.value || 0), 0);
+    const _activeLeads = cards.filter(card => !closedStageIds.includes(card.stageId)).length;
+    const _wonLeads = cards.filter(card => closedStageIds.includes(card.stageId)).length;
+    const _leadsWithoutTasks = cards.filter(card => !card.tasks || card.tasks.length === 0).length;
+    const _pendingTasks = cards.reduce((total, card) => {
+        const incompleteTasks = card.tasks?.filter(task => !task.completed).length || 0;
+        return total + incompleteTasks;
+    }, 0);
+
+    const sources: { [key: string]: number } = {};
+    cards.forEach(card => {
+      const source = card.source || "Não informado";
+      if (sources[source]) {
+        sources[source]++;
+      } else {
+        sources[source] = 1;
+      }
+    });
+    const _leadSources = Object.entries(sources)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    return {
+      currentRevenue: _currentRevenue,
+      activeLeads: _activeLeads,
+      wonLeads: _wonLeads,
+      leadsWithoutTasks: _leadsWithoutTasks,
+      leadSources: _leadSources,
+      pendingTasks: _pendingTasks,
+    };
   }, [cards, stages]);
 
   return (
@@ -99,20 +128,70 @@ const Dashboard = () => {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Tarefas Pendentes</CardTitle>
-            <CardDescription>Total</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-semibold">25</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
             <CardTitle>Receita do Mês</CardTitle>
             <CardDescription>Total faturado</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-xl font-semibold">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentRevenue)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Leads Ativos</CardTitle>
+            <CardDescription>Negócios em andamento</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-semibold">{activeLeads}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Leads Ganhos</CardTitle>
+            <CardDescription>Total de negócios fechados</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-semibold">{wonLeads}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Tarefas Pendentes</CardTitle>
+            <CardDescription>Total de tarefas a fazer</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-semibold">{pendingTasks}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Leads sem Tarefas</CardTitle>
+            <CardDescription>Oportunidades sem ações</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xl font-semibold">{leadsWithoutTasks}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Fontes de Leads</CardTitle>
+            <CardDescription>Principais canais de origem</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {leadSources.length > 0 ? (
+              <ul className="space-y-1 text-sm">
+                {leadSources.map(([source, count]) => (
+                  <li key={source} className="flex justify-between">
+                    <span>{source}</span>
+                    <span className="font-semibold">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhuma fonte registrada.</p>
+            )}
           </CardContent>
         </Card>
       </div>
