@@ -9,6 +9,7 @@ import Funnels from "./pages/Funnels";
 import Contacts from "./pages/Contacts";
 import Settings from "./pages/Settings";
 import ApiDocs from "./pages/ApiDocs";
+import CalendarPage from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/funnels" element={<Funnels />} />
             <Route path="/contacts" element={<Contacts />} />
+            <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/api" element={<ApiDocs />} />
           </Route>

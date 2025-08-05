@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
@@ -11,6 +11,7 @@ const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
   { to: "/funnels", icon: KanbanSquare, label: "Funis" },
   { to: "/contacts", icon: Users, label: "Contatos" },
+  { to: "/calendar", icon: Calendar, label: "Calendário" },
   { to: "/settings", icon: Settings, label: "Configurações" },
   { to: "/api", icon: Code, label: "API" },
 ];
