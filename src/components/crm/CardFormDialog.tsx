@@ -174,7 +174,7 @@ export function CardFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{initialData?.id ? "Editar Card" : "Criar Novo Card"}</DialogTitle>
         </DialogHeader>

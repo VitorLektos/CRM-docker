@@ -43,7 +43,7 @@ export function DayTasksDialog({ isOpen, onOpenChange, date, tasks, onTaskClick 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             Tarefas para {format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -52,7 +52,7 @@ export function DayTasksDialog({ isOpen, onOpenChange, date, tasks, onTaskClick 
             {tasks.length > 0 ? `Você tem ${tasks.length} tarefa(s) para este dia.` : "Nenhuma tarefa para este dia."}
           </DialogDescription>
         </DialogHeader>
-        <div className="mt-4 space-y-3 max-h-96 overflow-y-auto">
+        <div className="mt-4 space-y-3 max-h-[70vh] overflow-y-auto">
           {tasks.map((task, index) => (
             <div 
               key={index} 
