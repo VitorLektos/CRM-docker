@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Package } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
@@ -62,8 +62,8 @@ const NavLinks = ({ isMobile = false }) => (
 const SidebarHeader = () => (
     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <NavLink to="/" className="flex items-center gap-2 font-semibold">
-            <Package className="h-6 w-6" />
-            <span>CRM</span>
+            <Rocket className="h-6 w-6 text-primary" />
+            <span>Acelerador</span>
         </NavLink>
     </div>
 );
