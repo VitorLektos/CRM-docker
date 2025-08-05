@@ -8,7 +8,7 @@ import listPlugin from "@fullcalendar/list";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 import { DayTasksDialog } from "@/components/crm/DayTasksDialog";
-import { sampleCards } from "@/pages/Funnels"; // Re-using sample data for now
+import { sampleCards } from "@/data/sample-data";
 
 interface TaskEvent {
   title: string;
