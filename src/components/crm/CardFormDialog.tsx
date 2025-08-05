@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -110,13 +110,15 @@ export function CardFormDialog({
 }: CardFormDialogProps) {
   const form = useForm<CardFormValues>({
     resolver: zodResolver(cardSchema),
+    defaultValues: {
+      tasks: [],
+    },
   });
 
-  const { fields, append, remove } = React.useMemo(() => ({
-    fields: form.watch('tasks') || [],
-    append: (task: any) => form.setValue('tasks', [...(form.getValues('tasks') || []), task]),
-    remove: (index: number) => form.setValue('tasks', (form.getValues('tasks') || []).filter((_, i) => i !== index)),
-  }), [form]);
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "tasks",
+  });
 
   const [newTaskText, setNewTaskText] = React.useState("");
   const [newTaskDueDate, setNewTaskDueDate] = React.useState<Date | undefined>();
@@ -135,14 +137,26 @@ export function CardFormDialog({
   };
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && initialData) {
       form.reset({
         ...initialData,
-        value: initialData?.value || undefined,
-        tasks: initialData?.tasks?.map(t => ({...t, dueDate: t.dueDate ? new Date(t.dueDate) : undefined})) || [],
+        value: initialData.value || undefined,
+        tasks: initialData.tasks?.map(t => ({...t, dueDate: t.dueDate ? new Date(t.dueDate) : undefined})) || [],
+      });
+    } else if (isOpen) {
+      form.reset({
+        title: "",
+        companyName: "",
+        businessType: "",
+        description: "",
+        contactId: "",
+        stageId: stages[0]?.id || "",
+        tasks: [],
+        value: undefined,
+        source: "",
       });
     }
-  }, [initialData, isOpen, form]);
+  }, [initialData, isOpen, form, stages]);
 
   const contactId = form.watch("contactId");
   const associatedContact = contacts.find(c => c.id === contactId);
@@ -187,10 +201,10 @@ export function CardFormDialog({
                   )} />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="stageId" render={({ field }) => (
-                      <FormItem><FormLabel>Estágio</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value} required><FormControl><SelectTrigger><SelectValue placeholder="Selecione o estágio" /></SelectTrigger></FormControl><SelectContent>{stages.map((stage) => (<SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Estágio</FormLabel><Select onValueChange={field.onChange} value={field.value} required><FormControl><SelectTrigger><SelectValue placeholder="Selecione o estágio" /></SelectTrigger></FormControl><SelectContent>{stages.map((stage) => (<SelectItem key={stage.id} value={stage.id}>{stage.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="contactId" render={({ field }) => (
-                      <FormItem><FormLabel>Contato</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione um contato" /></SelectTrigger></FormControl><SelectContent>{contacts.map((contact) => (<SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Contato</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione um contato" /></SelectTrigger></FormControl><SelectContent>{contacts.map((contact) => (<SelectItem key={contact.id} value={contact.id}>{contact.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>
                     )} />
                   </div>
                   {associatedContact && (

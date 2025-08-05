@@ -34,12 +34,34 @@ import {
   type HistoryEntry
 } from "@/data/sample-data";
 
+const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+  const [state, setState] = React.useState<T>(() => {
+    try {
+      const storedValue = window.localStorage.getItem(key);
+      return storedValue ? JSON.parse(storedValue) : defaultValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+      return defaultValue;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state));
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
+    }
+  }, [key, state]);
+
+  return [state, setState];
+};
+
 const Funnels = () => {
-  const [funnels, setFunnels] = React.useState<Funnel[]>(sampleFunnels);
-  const [stages, setStages] = React.useState<Stage[]>(sampleStages);
-  const [cards, setCards] = React.useState<CardData[]>(sampleCards);
+  const [funnels, setFunnels] = usePersistentState<Funnel[]>("funnels_data", sampleFunnels);
+  const [stages, setStages] = usePersistentState<Stage[]>("stages_data", sampleStages);
+  const [cards, setCards] = usePersistentState<CardData[]>("cards_data", sampleCards);
   const [contacts] = React.useState<Contact[]>(sampleContacts);
-  const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(sampleFunnels[0]?.id || "");
+  const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(() => funnels[0]?.id || "");
   const [viewMode, setViewMode] = React.useState<'kanban' | 'list'>('kanban');
   
   const [isCreateFunnelOpen, setCreateFunnelOpen] = React.useState(false);
@@ -50,6 +72,12 @@ const Funnels = () => {
   const [currentCard, setCurrentCard] = React.useState<Partial<CardData> | null>(null);
 
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (!selectedFunnelId && funnels.length > 0) {
+      setSelectedFunnelId(funnels[0].id);
+    }
+  }, [funnels, selectedFunnelId]);
 
   const addHistoryEntry = (card: CardData, description: string): CardData => {
     const newEntry: HistoryEntry = {
@@ -259,7 +287,7 @@ const Funnels = () => {
               <Button onClick={handleNewCardClick}><Plus className="h-4 w-4 mr-2" />Novo Card</Button>
             </>
           )}
-          <Button onClick={() => setCreateFunnelOpen(true)} className={selectedFunnelId ? 'hidden' : ''}>Novo Funil</Button>
+          <Button onClick={() => setCreateFunnelOpen(true)} className={selectedFunnelId ? '' : 'ml-auto'}>Novo Funil</Button>
         </div>
       </Header>
 

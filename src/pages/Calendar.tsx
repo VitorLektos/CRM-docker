@@ -8,7 +8,7 @@ import listPlugin from "@fullcalendar/list";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 import { DayTasksDialog } from "@/components/crm/DayTasksDialog";
-import { sampleCards } from "@/data/sample-data";
+import { sampleCards, type CardData } from "@/data/sample-data";
 
 interface TaskEvent {
   title: string;
@@ -26,7 +26,17 @@ const CalendarPage = () => {
   const [selectedTasks, setSelectedTasks] = React.useState<TaskEvent[]>([]);
 
   React.useEffect(() => {
-    const allTasks = sampleCards.flatMap(card => 
+    let allCards: CardData[] = sampleCards;
+    try {
+      const storedCards = window.localStorage.getItem("cards_data");
+      if (storedCards) {
+        allCards = JSON.parse(storedCards);
+      }
+    } catch (error) {
+      console.warn("Could not parse cards from localStorage", error);
+    }
+
+    const allTasks = allCards.flatMap(card => 
       card.tasks
         .filter(task => task.dueDate)
         .map(task => ({
@@ -74,7 +84,9 @@ const CalendarPage = () => {
                 list:     'Lista'
             }}
             eventDisplay="block"
-            dayMaxEvents={2} // Show a "+more" link if more than 2 events
+            dayMaxEvents={2}
+            height="auto"
+            aspectRatio={1.75}
           />
         </CardContent>
       </Card>
