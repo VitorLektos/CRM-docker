@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FunnelBoard } from "@/components/crm/FunnelBoard";
 import { FunnelListView } from "@/components/crm/FunnelListView";
 import { useToast } from "@/hooks/use-toast";
@@ -57,6 +58,8 @@ const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatc
 };
 
 const Funnels = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [funnels, setFunnels] = usePersistentState<Funnel[]>("funnels_data", sampleFunnels);
   const [stages, setStages] = usePersistentState<Stage[]>("stages_data", sampleStages);
   const [cards, setCards] = usePersistentState<CardData[]>("cards_data", sampleCards);
@@ -72,6 +75,22 @@ const Funnels = () => {
   const [currentCard, setCurrentCard] = React.useState<Partial<CardData> | null>(null);
 
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    const cardIdToOpen = location.state?.openCardId;
+    if (cardIdToOpen) {
+      const cardToOpen = cards.find(c => c.id === cardIdToOpen);
+      if (cardToOpen) {
+        const funnelId = stages.find(s => s.id === cardToOpen.stageId)?.funnelId;
+        if (funnelId) {
+          setSelectedFunnelId(funnelId);
+        }
+        handleCardClick(cardIdToOpen);
+        // Clear state to prevent re-opening
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, cards, stages, navigate, location.pathname]);
 
   React.useEffect(() => {
     if (!selectedFunnelId && funnels.length > 0) {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -8,7 +9,7 @@ import listPlugin from "@fullcalendar/list";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/layout/Header";
 import { DayTasksDialog } from "@/components/crm/DayTasksDialog";
-import { sampleCards, type CardData } from "@/data/sample-data";
+import { sampleCards, type CardData, type TaskPriority } from "@/data/sample-data";
 
 interface TaskEvent {
   title: string;
@@ -16,10 +17,19 @@ interface TaskEvent {
   extendedProps: {
     cardTitle: string;
     cardId: string;
+    priority?: TaskPriority;
   };
 }
 
+const priorityOrder: Record<TaskPriority, number> = {
+  "Urgente": 4,
+  "Alta": 3,
+  "Média": 2,
+  "Baixa": 1,
+};
+
 const CalendarPage = () => {
+  const navigate = useNavigate();
   const [events, setEvents] = React.useState<TaskEvent[]>([]);
   const [isDialogOpen, setDialogOpen] = React.useState(false);
   const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
@@ -45,9 +55,14 @@ const CalendarPage = () => {
           extendedProps: {
             cardTitle: card.title,
             cardId: card.id,
+            priority: task.priority,
           }
         }))
-    );
+    ).sort((a, b) => {
+      const priorityA = priorityOrder[a.extendedProps.priority || "Baixa"] || 0;
+      const priorityB = priorityOrder[b.extendedProps.priority || "Baixa"] || 0;
+      return priorityB - priorityA;
+    });
     setEvents(allTasks);
   }, []);
 
@@ -58,6 +73,11 @@ const CalendarPage = () => {
     setSelectedDate(arg.date);
     setSelectedTasks(tasksForDay);
     setDialogOpen(true);
+  };
+
+  const handleTaskClick = (cardId: string) => {
+    setDialogOpen(false);
+    navigate('/funnels', { state: { openCardId: cardId } });
   };
 
   return (
@@ -95,6 +115,7 @@ const CalendarPage = () => {
         onOpenChange={setDialogOpen}
         date={selectedDate}
         tasks={selectedTasks}
+        onTaskClick={handleTaskClick}
       />
     </>
   );

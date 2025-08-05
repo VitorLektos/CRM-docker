@@ -37,12 +37,16 @@ import { CalendarIcon, PlusCircle, Trash2, Mail, Phone, User, Clock } from "luci
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { TaskPriority } from "@/data/sample-data";
+
+const priorities: TaskPriority[] = ["Baixa", "Média", "Alta", "Urgente"];
 
 const taskSchema = z.object({
   id: z.string(),
   text: z.string().min(1, "A descrição da tarefa é obrigatória."),
   completed: z.boolean(),
   dueDate: z.date().optional(),
+  priority: z.enum(priorities).optional(),
 });
 
 const cardSchema = z.object({
@@ -122,6 +126,7 @@ export function CardFormDialog({
 
   const [newTaskText, setNewTaskText] = React.useState("");
   const [newTaskDueDate, setNewTaskDueDate] = React.useState<Date | undefined>();
+  const [newTaskPriority, setNewTaskPriority] = React.useState<TaskPriority>("Média");
 
   const handleAddTask = () => {
     if (newTaskText.trim()) {
@@ -130,9 +135,11 @@ export function CardFormDialog({
         text: newTaskText.trim(),
         completed: false,
         dueDate: newTaskDueDate,
+        priority: newTaskPriority,
       });
       setNewTaskText("");
       setNewTaskDueDate(undefined);
+      setNewTaskPriority("Média");
     }
   };
 
@@ -230,6 +237,9 @@ export function CardFormDialog({
                       <div key={item.id} className="flex items-center gap-2 p-2 bg-secondary rounded-md">
                         <Controller name={`tasks.${index}.completed`} control={form.control} render={({ field }) => (<Checkbox checked={field.value} onCheckedChange={field.onChange} />)} />
                         <Controller name={`tasks.${index}.text`} control={form.control} render={({ field }) => (<Input {...field} className="flex-grow bg-transparent border-none focus:ring-0" />)} />
+                        <Controller name={`tasks.${index}.priority`} control={form.control} render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="w-[120px]"><SelectValue placeholder="Prioridade" /></SelectTrigger></FormControl><SelectContent>{priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                        )} />
                         <Controller name={`tasks.${index}.dueDate`} control={form.control} render={({ field }) => (
                           <Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-[180px] justify-start text-left font-normal",!field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "dd/MM/yyyy") : <span>Prazo</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover>
                         )} />
@@ -239,6 +249,7 @@ export function CardFormDialog({
                   </div>
                   <div className="flex items-center gap-2 pt-4 mt-2 border-t">
                     <Input value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} placeholder="Nova tarefa..." onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTask(); } }} />
+                    <Select value={newTaskPriority} onValueChange={(v: TaskPriority) => setNewTaskPriority(v)}><SelectTrigger className="w-[140px]"><SelectValue placeholder="Prioridade" /></SelectTrigger><SelectContent>{priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
                     <Popover><PopoverTrigger asChild><Button variant="outline" size="icon"><CalendarIcon className="h-4 w-4" /></Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={newTaskDueDate} onSelect={setNewTaskDueDate} initialFocus /></PopoverContent></Popover>
                     <Button type="button" onClick={handleAddTask}><PlusCircle className="h-4 w-4 mr-2" /> Adicionar</Button>
                   </div>
