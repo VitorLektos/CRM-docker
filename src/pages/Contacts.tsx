@@ -50,6 +50,7 @@ const Contacts = () => {
     } else {
       const newContact: Contact = {
         id: `contact-${Date.now()}`,
+        createdAt: new Date().toISOString(),
         ...data,
       };
       setContacts(prev => [...prev, newContact]);
@@ -80,7 +81,7 @@ const Contacts = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ["id", "name", "email", "phone", "company"];
+    const headers = ["id", "name", "email", "phone", "company", "role", "industry", "companyUrl", "address", "createdAt"];
     const csvRows = [
       headers.join(','),
       ...contacts.map(row => 
@@ -101,7 +102,8 @@ const Contacts = () => {
   };
 
   const handleImport = (newContacts: Contact[]) => {
-    setContacts(prev => [...prev, ...newContacts]);
+    const contactsWithDate = newContacts.map(c => ({...c, createdAt: new Date().toISOString()}))
+    setContacts(prev => [...prev, ...contactsWithDate]);
     toast({ title: "Importação Concluída", description: `${newContacts.length} novos contatos adicionados.` });
   };
 
@@ -111,7 +113,7 @@ const Contacts = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Cadastrar Novo Contato</CardTitle>
+            <CardTitle>Cadastrar/Editar Contato</CardTitle>
           </CardHeader>
           <CardContent>
             <ContactForm onSubmit={handleContactSubmit} />
@@ -156,7 +158,7 @@ const Contacts = () => {
         </AlertDialogContent>
       </AlertDialog>
       <Dialog open={isEditOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Editar Contato</DialogTitle>
             <DialogDescription>

@@ -23,6 +23,11 @@ export interface Contact {
   email?: string;
   phone?: string;
   company?: string;
+  role?: string;
+  industry?: string;
+  companyUrl?: string;
+  address?: string;
+  createdAt: string;
 }
 
 export interface CardData {
@@ -54,10 +59,10 @@ export interface Funnel {
 
 // Sample Data
 export const sampleContacts: Contact[] = [
-    { id: 'contact-1', name: 'João Silva', email: 'joao.silva@example.com', phone: '(11) 98765-4321', company: 'Tech Solutions' },
-    { id: 'contact-2', name: 'Maria Oliveira', email: 'maria.o@example.com', phone: '(21) 91234-5678', company: 'Inova Corp' },
-    { id: 'contact-3', name: 'Pedro Santos', email: 'pedro.santos@example.com', phone: '(31) 95555-5555', company: 'Marketing Digital BR' },
-    { id: 'contact-4', name: 'Ana Costa', email: 'ana.costa@example.com', phone: '(41) 94444-4444', company: 'Consultoria XYZ' },
+    { id: 'contact-1', name: 'João Silva', email: 'joao.silva@example.com', phone: '(11) 98765-4321', company: 'Tech Solutions', role: 'Desenvolvedor Sênior', industry: 'Tecnologia', companyUrl: 'https://techsolutions.com', address: 'Rua Fictícia, 123, São Paulo, SP', createdAt: new Date('2024-07-15T10:00:00Z').toISOString() },
+    { id: 'contact-2', name: 'Maria Oliveira', email: 'maria.o@example.com', phone: '(21) 91234-5678', company: 'Inova Corp', role: 'Gerente de Projetos', industry: 'Consultoria', companyUrl: 'https://inovacorp.com', address: 'Avenida Brasil, 456, Rio de Janeiro, RJ', createdAt: new Date('2024-07-10T14:30:00Z').toISOString() },
+    { id: 'contact-3', name: 'Pedro Santos', email: 'pedro.santos@example.com', phone: '(31) 95555-5555', company: 'Marketing Digital BR', role: 'Analista de Marketing', industry: 'Marketing', companyUrl: 'https://marketingdigitalbr.com', address: 'Praça da Liberdade, 789, Belo Horizonte, MG', createdAt: new Date('2024-06-20T09:00:00Z').toISOString() },
+    { id: 'contact-4', name: 'Ana Costa', email: 'ana.costa@example.com', phone: '(41) 94444-4444', company: 'Consultoria XYZ', role: 'Consultora de Vendas', industry: 'Consultoria', companyUrl: 'https://consultoriaxyz.com', address: 'Rua das Flores, 101, Curitiba, PR', createdAt: new Date('2024-06-18T11:45:00Z').toISOString() },
 ];
 
 export const stageColorStyles = [

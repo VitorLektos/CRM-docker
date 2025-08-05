@@ -21,6 +21,11 @@ const contactSchema = z.object({
   email: z.string().email("Email inválido").optional().or(z.literal('')),
   phone: z.string().optional(),
   company: z.string().optional(),
+  role: z.string().optional(),
+  industry: z.string().optional(),
+  companyUrl: z.string().url("URL inválida").optional().or(z.literal('')),
+  address: z.string().optional(),
+  createdAt: z.string().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -40,6 +45,10 @@ export function ContactForm({ initialValues, onSubmit, isLoading, isEdit = false
       email: "",
       phone: "",
       company: "",
+      role: "",
+      industry: "",
+      companyUrl: "",
+      address: "",
     },
   });
 
@@ -53,61 +62,39 @@ export function ContactForm({ initialValues, onSubmit, isLoading, isEdit = false
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4 max-w-md"
+        className="space-y-4"
         noValidate
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input placeholder="Nome do contato" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="email@exemplo.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telefone</FormLabel>
-              <FormControl>
-                <Input placeholder="(00) 00000-0000" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="company"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Empresa</FormLabel>
-              <FormControl>
-                <Input placeholder="Nome da empresa" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField control={form.control} name="name" render={({ field }) => (
+            <FormItem><FormLabel>Nome</FormLabel><FormControl><Input placeholder="Nome do contato" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="role" render={({ field }) => (
+            <FormItem><FormLabel>Cargo/Posição</FormLabel><FormControl><Input placeholder="Ex: Gerente de Vendas" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField control={form.control} name="email" render={({ field }) => (
+            <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="email@exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="phone" render={({ field }) => (
+            <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input placeholder="(00) 00000-0000" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField control={form.control} name="company" render={({ field }) => (
+            <FormItem><FormLabel>Empresa</FormLabel><FormControl><Input placeholder="Nome da empresa" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="industry" render={({ field }) => (
+            <FormItem><FormLabel>Setor da Empresa</FormLabel><FormControl><Input placeholder="Ex: Tecnologia" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+        <FormField control={form.control} name="companyUrl" render={({ field }) => (
+          <FormItem><FormLabel>URL da Empresa</FormLabel><FormControl><Input placeholder="https://exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
+        <FormField control={form.control} name="address" render={({ field }) => (
+          <FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua, Número, Cidade, Estado" {...field} /></FormControl><FormMessage /></FormItem>
+        )} />
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Salvando..." : (isEdit ? "Salvar Alterações" : "Salvar Contato")}
         </Button>

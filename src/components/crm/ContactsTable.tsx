@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Trash2, Edit } from "lucide-react";
 import { Contact } from "@/data/sample-data";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ContactsTableProps {
   contacts: Contact[];
@@ -28,7 +30,9 @@ export function ContactsTable({ contacts, onDelete, onEdit }: ContactsTableProps
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    contact.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contact.industry?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -47,8 +51,9 @@ export function ContactsTable({ contacts, onDelete, onEdit }: ContactsTableProps
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Empresa</TableHead>
+              <TableHead>Cargo</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Telefone</TableHead>
+              <TableHead>Data de Criação</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -58,8 +63,9 @@ export function ContactsTable({ contacts, onDelete, onEdit }: ContactsTableProps
                 <TableRow key={contact.id}>
                   <TableCell className="font-medium">{contact.name}</TableCell>
                   <TableCell>{contact.company || "N/A"}</TableCell>
+                  <TableCell>{contact.role || "N/A"}</TableCell>
                   <TableCell>{contact.email || "N/A"}</TableCell>
-                  <TableCell>{contact.phone || "N/A"}</TableCell>
+                  <TableCell>{format(new Date(contact.createdAt), "dd/MM/yyyy", { locale: ptBR })}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -84,7 +90,7 @@ export function ContactsTable({ contacts, onDelete, onEdit }: ContactsTableProps
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   Nenhum resultado encontrado.
                 </TableCell>
               </TableRow>
