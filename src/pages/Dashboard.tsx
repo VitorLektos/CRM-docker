@@ -109,7 +109,7 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Receita Mensal</CardTitle>
             <CardDescription>Evolução da receita nos últimos meses</CardDescription>
-          </Header>
+          </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyRevenueData}>
