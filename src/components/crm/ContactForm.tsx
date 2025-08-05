@@ -25,7 +25,6 @@ const contactSchema = z.object({
   industry: z.string().optional(),
   companyUrl: z.string().url("URL inválida").optional().or(z.literal('')),
   address: z.string().optional(),
-  createdAt: z.string().optional(),
 });
 
 type ContactFormValues = z.infer<typeof contactSchema>;
@@ -90,10 +89,10 @@ export function ContactForm({ initialValues, onSubmit, isLoading, isEdit = false
           )} />
         </div>
         <FormField control={form.control} name="companyUrl" render={({ field }) => (
-          <FormItem><FormLabel>URL da Empresa</FormLabel><FormControl><Input placeholder="https://exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>URL da Empresa</FormLabel><FormControl><Input placeholder="https://exemplo.com" {...field} /></FormControl><FormMessage /></FormMessage>
         )} />
         <FormField control={form.control} name="address" render={({ field }) => (
-          <FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua, Número, Cidade, Estado" {...field} /></FormControl><FormMessage /></FormItem>
+          <FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua, Número, Cidade, Estado" {...field} /></FormControl><FormMessage /></FormMessage>
         )} />
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Salvando..." : (isEdit ? "Salvar Alterações" : "Salvar Contato")}
