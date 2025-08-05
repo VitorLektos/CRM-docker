@@ -16,8 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 const contactSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1, "Nome é obrigatório"),
-  email: z.string().email("Email inválido").optional(),
+  email: z.string().email("Email inválido").optional().or(z.literal('')),
   phone: z.string().optional(),
   company: z.string().optional(),
 });
@@ -25,12 +26,13 @@ const contactSchema = z.object({
 type ContactFormValues = z.infer<typeof contactSchema>;
 
 interface ContactFormProps {
-  initialValues?: ContactFormValues;
+  initialValues?: Partial<ContactFormValues>;
   onSubmit: (values: ContactFormValues) => void;
   isLoading?: boolean;
+  isEdit?: boolean;
 }
 
-export function ContactForm({ initialValues, onSubmit, isLoading }: ContactFormProps) {
+export function ContactForm({ initialValues, onSubmit, isLoading, isEdit = false }: ContactFormProps) {
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: initialValues || {
@@ -40,6 +42,12 @@ export function ContactForm({ initialValues, onSubmit, isLoading }: ContactFormP
       company: "",
     },
   });
+
+  React.useEffect(() => {
+    if (initialValues) {
+      form.reset(initialValues);
+    }
+  }, [initialValues, form]);
 
   return (
     <Form {...form}>
@@ -101,7 +109,7 @@ export function ContactForm({ initialValues, onSubmit, isLoading }: ContactFormP
           )}
         />
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Salvando..." : "Salvar Contato"}
+          {isLoading ? "Salvando..." : (isEdit ? "Salvar Alterações" : "Salvar Contato")}
         </Button>
       </form>
     </Form>

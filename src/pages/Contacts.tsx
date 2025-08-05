@@ -11,7 +11,23 @@ import { ContactsTable } from "@/components/crm/ContactsTable";
 import { Button } from "@/components/ui/button";
 import { Download, Upload } from "lucide-react";
 import { ImportContactsDialog } from "@/components/crm/ImportContactsDialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Contacts = () => {
   const { toast } = useToast();
@@ -19,17 +35,34 @@ const Contacts = () => {
   const [isImportOpen, setImportOpen] = React.useState(false);
   const [isDeleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [contactToDelete, setContactToDelete] = React.useState<string | null>(null);
+  const [isEditOpen, setEditOpen] = React.useState(false);
+  const [contactToEdit, setContactToEdit] = React.useState<Contact | null>(null);
 
   const handleContactSubmit = (data: any) => {
-    const newContact: Contact = {
-      id: `contact-${Date.now()}`,
-      ...data,
-    };
-    setContacts(prev => [...prev, newContact]);
-    toast({
-      title: "Contato salvo",
-      description: `Contato ${data.name} salvo com sucesso!`,
-    });
+    if (data.id) {
+      setContacts(prev => prev.map(c => c.id === data.id ? { ...c, ...data } : c));
+      toast({
+        title: "Contato atualizado",
+        description: `Contato ${data.name} atualizado com sucesso!`,
+      });
+      setEditOpen(false);
+      setContactToEdit(null);
+    } else {
+      const newContact: Contact = {
+        id: `contact-${Date.now()}`,
+        ...data,
+      };
+      setContacts(prev => [...prev, newContact]);
+      toast({
+        title: "Contato salvo",
+        description: `Contato ${data.name} salvo com sucesso!`,
+      });
+    }
+  };
+
+  const handleEditRequest = (contact: Contact) => {
+    setContactToEdit(contact);
+    setEditOpen(true);
   };
 
   const handleDeleteRequest = (contactId: string) => {
@@ -47,7 +80,7 @@ const Contacts = () => {
   };
 
   const handleExportCSV = () => {
-    const headers = ["id", "name", "email", "phone"];
+    const headers = ["id", "name", "email", "phone", "company"];
     const csvRows = [
       headers.join(','),
       ...contacts.map(row => 
@@ -101,7 +134,7 @@ const Contacts = () => {
                 </div>
             </CardHeader>
             <CardContent>
-                <ContactsTable contacts={contacts} onDelete={handleDeleteRequest} />
+                <ContactsTable contacts={contacts} onDelete={handleDeleteRequest} onEdit={handleEditRequest} />
             </CardContent>
         </Card>
       </div>
@@ -122,6 +155,23 @@ const Contacts = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Dialog open={isEditOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Contato</DialogTitle>
+            <DialogDescription>
+              Faça alterações nos dados do contato aqui. Clique em salvar quando terminar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="pt-4">
+            <ContactForm 
+              onSubmit={handleContactSubmit} 
+              initialValues={contactToEdit || undefined} 
+              isEdit={true} 
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

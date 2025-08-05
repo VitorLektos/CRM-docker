@@ -22,6 +22,7 @@ export interface Contact {
   name: string;
   email?: string;
   phone?: string;
+  company?: string;
 }
 
 export interface CardData {
@@ -53,10 +54,10 @@ export interface Funnel {
 
 // Sample Data
 export const sampleContacts: Contact[] = [
-    { id: 'contact-1', name: 'João Silva', email: 'joao.silva@example.com', phone: '(11) 98765-4321' },
-    { id: 'contact-2', name: 'Maria Oliveira', email: 'maria.o@example.com', phone: '(21) 91234-5678' },
-    { id: 'contact-3', name: 'Pedro Santos', email: 'pedro.santos@example.com', phone: '(31) 95555-5555' },
-    { id: 'contact-4', name: 'Ana Costa', email: 'ana.costa@example.com', phone: '(41) 94444-4444' },
+    { id: 'contact-1', name: 'João Silva', email: 'joao.silva@example.com', phone: '(11) 98765-4321', company: 'Tech Solutions' },
+    { id: 'contact-2', name: 'Maria Oliveira', email: 'maria.o@example.com', phone: '(21) 91234-5678', company: 'Inova Corp' },
+    { id: 'contact-3', name: 'Pedro Santos', email: 'pedro.santos@example.com', phone: '(31) 95555-5555', company: 'Marketing Digital BR' },
+    { id: 'contact-4', name: 'Ana Costa', email: 'ana.costa@example.com', phone: '(41) 94444-4444', company: 'Consultoria XYZ' },
 ];
 
 export const stageColorStyles = [
