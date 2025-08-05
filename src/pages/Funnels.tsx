@@ -14,11 +14,14 @@ import {
 import { CreateFunnelDialog } from "@/components/crm/CreateFunnelDialog";
 import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
 import { CreateStageDialog } from "@/components/crm/CreateStageDialog";
-import { Plus } from "lucide-react";
+import { EditFunnelDialog } from "@/components/crm/EditFunnelDialog";
+import { DeleteFunnelDialog } from "@/components/crm/DeleteFunnelDialog";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
+import { Card } from "@/components/ui/card";
 
 // Interfaces
-interface Card {
+interface CardData {
   id: string;
   title: string;
   description?: string;
@@ -55,7 +58,7 @@ const sampleStages: Stage[] = [
   { id: "stage-7", name: "SQL", funnelId: "funnel-2" },
 ];
 
-const sampleCards: Card[] = [
+const sampleCards: CardData[] = [
   { id: "card-1", title: "Contato João", description: "Interessado no produto X", assignedTo: "Maria", tasksCount: 3, tasksDoneCount: 1, stageId: "stage-1" },
   { id: "card-2", title: "Contato Ana", description: "Aguardando resposta", assignedTo: "Carlos", tasksCount: 2, tasksDoneCount: 2, stageId: "stage-2" },
   { id: "card-3", title: "Lead do Ebook", description: "Baixou o ebook de marketing", assignedTo: "Pedro", tasksCount: 1, tasksDoneCount: 0, stageId: "stage-5" },
@@ -64,12 +67,14 @@ const sampleCards: Card[] = [
 const Funnels = () => {
   const [funnels, setFunnels] = React.useState<Funnel[]>(sampleFunnels);
   const [stages, setStages] = React.useState<Stage[]>(sampleStages);
-  const [cards, setCards] = React.useState<Card[]>(sampleCards);
+  const [cards, setCards] = React.useState<CardData[]>(sampleCards);
   const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(sampleFunnels[0]?.id || "");
   
   const [isCreateFunnelOpen, setCreateFunnelOpen] = React.useState(false);
   const [isCreateStageOpen, setCreateStageOpen] = React.useState(false);
-  const [selectedCard, setSelectedCard] = React.useState<Card | null>(null);
+  const [isEditFunnelOpen, setEditFunnelOpen] = React.useState(false);
+  const [isDeleteFunnelOpen, setDeleteFunnelOpen] = React.useState(false);
+  const [selectedCard, setSelectedCard] = React.useState<CardData | null>(null);
 
   const { toast } = useToast();
 
@@ -128,32 +133,99 @@ const Funnels = () => {
     });
   };
 
+  const handleSaveFunnel = (funnelId: string, newName: string, newStageNames: string[]) => {
+    setFunnels(prev => prev.map(f => f.id === funnelId ? { ...f, name: newName } : f));
+
+    const existingStages = stages.filter(s => s.funnelId === funnelId);
+    const newStages: Stage[] = [];
+    const updatedStages: Stage[] = [];
+
+    newStageNames.forEach(name => {
+      const existing = existingStages.find(s => s.name === name);
+      if (existing) {
+        updatedStages.push(existing);
+      } else {
+        newStages.push({
+          id: `stage-${Date.now()}-${Math.random()}`,
+          name: name,
+          funnelId: funnelId,
+        });
+      }
+    });
+
+    setStages(prev => [
+      ...prev.filter(s => s.funnelId !== funnelId),
+      ...updatedStages,
+      ...newStages,
+    ]);
+
+    toast({
+      title: "Funil atualizado!",
+      description: `O funil "${newName}" foi salvo com sucesso.`,
+    });
+  };
+
+  const handleDeleteFunnel = () => {
+    if (!selectedFunnelId) return;
+
+    const funnelToDelete = funnels.find(f => f.id === selectedFunnelId);
+    if (!funnelToDelete) return;
+
+    const updatedFunnels = funnels.filter(f => f.id !== selectedFunnelId);
+    setFunnels(updatedFunnels);
+
+    const associatedStageIds = stages.filter(s => s.funnelId === selectedFunnelId).map(s => s.id);
+    setStages(prev => prev.filter(s => s.funnelId !== selectedFunnelId));
+
+    setCards(prev => prev.filter(c => !associatedStageIds.includes(c.stageId)));
+
+    setSelectedFunnelId(updatedFunnels[0]?.id || "");
+
+    toast({
+      title: "Funil excluído!",
+      description: `O funil "${funnelToDelete.name}" foi excluído.`,
+      variant: "destructive",
+    });
+
+    setDeleteFunnelOpen(false);
+  };
+
+  const selectedFunnel = funnels.find(f => f.id === selectedFunnelId) || null;
   const currentStages = stages.filter((stage) => stage.funnelId === selectedFunnelId);
-  const currentStageIds = currentStages.map(stage => stage.id);
-  const currentCards = cards.filter((card) => currentStageIds.includes(card.stageId));
+  const currentCards = cards.filter((card) => currentStages.map(s => s.id).includes(card.stageId));
 
   return (
     <>
       <Header title="Funis">
-        <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId} disabled={funnels.length === 0}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Selecione um funil" />
-          </SelectTrigger>
-          <SelectContent>
-            {funnels.map((funnel) => (
-              <SelectItem key={funnel.id} value={funnel.id}>
-                {funnel.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedFunnelId && (
-          <Button variant="outline" onClick={() => setCreateStageOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Estágio
-          </Button>
-        )}
-        <Button onClick={() => setCreateFunnelOpen(true)}>Novo Funil</Button>
+        <div className="flex items-center gap-2">
+          <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId} disabled={funnels.length === 0}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Selecione um funil" />
+            </SelectTrigger>
+            <SelectContent>
+              {funnels.map((funnel) => (
+                <SelectItem key={funnel.id} value={funnel.id}>
+                  {funnel.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedFunnelId && (
+            <>
+              <Button variant="outline" size="icon" onClick={() => setEditFunnelOpen(true)}>
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button variant="destructive" size="icon" onClick={() => setDeleteFunnelOpen(true)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" onClick={() => setCreateStageOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Estágio
+              </Button>
+            </>
+          )}
+          <Button onClick={() => setCreateFunnelOpen(true)}>Novo Funil</Button>
+        </div>
       </Header>
 
       {funnels.length > 0 && selectedFunnelId ? (
@@ -182,6 +254,20 @@ const Funnels = () => {
         isOpen={isCreateStageOpen}
         onOpenChange={setCreateStageOpen}
         onCreate={handleCreateStage}
+      />
+
+      <EditFunnelDialog
+        isOpen={isEditFunnelOpen}
+        onOpenChange={setEditFunnelOpen}
+        funnel={selectedFunnel}
+        initialStages={currentStages.map(s => s.name)}
+        onSave={handleSaveFunnel}
+      />
+
+      <DeleteFunnelDialog
+        isOpen={isDeleteFunnelOpen}
+        onOpenChange={setDeleteFunnelOpen}
+        onConfirm={handleDeleteFunnel}
       />
 
       <CardDetailDialog

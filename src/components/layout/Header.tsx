@@ -9,9 +9,9 @@ interface HeaderProps {
 
 export function Header({ title, children }: HeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between mb-6">
       <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-      {children && <div className="flex items-center gap-2">{children}</div>}
+      {children}
     </div>
   );
 }
