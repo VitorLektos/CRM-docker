@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/select";
 import { CreateFunnelDialog } from "@/components/crm/CreateFunnelDialog";
 import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
+import { CreateStageDialog } from "@/components/crm/CreateStageDialog";
+import { Plus } from "lucide-react";
 
 // Interfaces
 interface Card {
@@ -65,6 +67,7 @@ const Funnels = () => {
   const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(sampleFunnels[0]?.id || "");
   
   const [isCreateFunnelOpen, setCreateFunnelOpen] = React.useState(false);
+  const [isCreateStageOpen, setCreateStageOpen] = React.useState(false);
   const [selectedCard, setSelectedCard] = React.useState<Card | null>(null);
 
   const { toast } = useToast();
@@ -88,23 +91,39 @@ const Funnels = () => {
     }
   };
 
-  const handleCreateFunnel = (funnelName: string) => {
+  const handleCreateFunnel = (funnelName: string, stageNames: string[]) => {
     const newFunnel: Funnel = {
       id: `funnel-${Date.now()}`,
       name: funnelName,
     };
     setFunnels((prev) => [...prev, newFunnel]);
-    // Also create a default "Novo" stage for the new funnel
-    const newStage: Stage = {
-        id: `stage-${Date.now()}`,
-        name: "Novo",
+
+    const newStages: Stage[] = stageNames.map((name, index) => ({
+        id: `stage-${Date.now()}-${index}`,
+        name: name,
         funnelId: newFunnel.id,
-    }
-    setStages((prev) => [...prev, newStage]);
+    }));
+    setStages((prev) => [...prev, ...newStages]);
+
     setSelectedFunnelId(newFunnel.id);
     toast({
       title: "Funil criado!",
       description: `O funil "${funnelName}" foi criado com sucesso.`,
+    });
+  };
+
+  const handleCreateStage = (stageName: string) => {
+    if (!selectedFunnelId) return;
+
+    const newStage: Stage = {
+      id: `stage-${Date.now()}`,
+      name: stageName,
+      funnelId: selectedFunnelId,
+    };
+    setStages((prev) => [...prev, newStage]);
+    toast({
+      title: "Estágio adicionado!",
+      description: `O estágio "${stageName}" foi adicionado ao funil.`,
     });
   };
 
@@ -117,7 +136,7 @@ const Funnels = () => {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold">Funis</h1>
         <div className="flex items-center gap-2">
-          <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId}>
+          <Select value={selectedFunnelId} onValueChange={setSelectedFunnelId} disabled={funnels.length === 0}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Selecione um funil" />
             </SelectTrigger>
@@ -129,21 +148,42 @@ const Funnels = () => {
               ))}
             </SelectContent>
           </Select>
+          {selectedFunnelId && (
+            <Button variant="outline" onClick={() => setCreateStageOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Estágio
+            </Button>
+          )}
           <Button onClick={() => setCreateFunnelOpen(true)}>Novo Funil</Button>
         </div>
       </div>
 
-      <FunnelBoard
-        stages={currentStages}
-        cards={currentCards}
-        onCardMove={handleCardMove}
-        onCardClick={handleCardClick}
-      />
+      {funnels.length > 0 && selectedFunnelId ? (
+        <FunnelBoard
+          stages={currentStages}
+          cards={currentCards}
+          onCardMove={handleCardMove}
+          onCardClick={handleCardClick}
+        />
+      ) : (
+        <div className="flex flex-col items-center justify-center text-center p-10 border-2 border-dashed rounded-lg">
+            <h2 className="text-xl font-semibold">Nenhum funil encontrado</h2>
+            <p className="text-muted-foreground mt-2 mb-4">Crie seu primeiro funil para começar a organizar seus negócios.</p>
+            <Button onClick={() => setCreateFunnelOpen(true)}>Criar Primeiro Funil</Button>
+        </div>
+      )}
+
 
       <CreateFunnelDialog
         isOpen={isCreateFunnelOpen}
         onOpenChange={setCreateFunnelOpen}
         onCreate={handleCreateFunnel}
+      />
+
+      <CreateStageDialog
+        isOpen={isCreateStageOpen}
+        onOpenChange={setCreateStageOpen}
+        onCreate={handleCreateStage}
       />
 
       <CardDetailDialog
