@@ -224,11 +224,39 @@ const Funnels = () => {
     .filter((card) => currentStages.map(s => s.id).includes(card.stageId))
     .map(card => {
         const contact = contacts.find(c => c.id === card.contactId);
+        
+        let status: "default" | "due" | "overdue" = "default";
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (card.tasks && card.tasks.length > 0) {
+          const incompleteTasks = card.tasks.filter(t => !t.completed && t.dueDate);
+          
+          const isOverdue = incompleteTasks.some(t => {
+              const dueDate = new Date(t.dueDate!);
+              dueDate.setHours(0, 0, 0, 0);
+              return dueDate < today;
+          });
+
+          const isDueToday = incompleteTasks.some(t => {
+              const dueDate = new Date(t.dueDate!);
+              dueDate.setHours(0, 0, 0, 0);
+              return dueDate.getTime() === today.getTime();
+          });
+
+          if (isOverdue) {
+              status = 'overdue';
+          } else if (isDueToday) {
+              status = 'due';
+          }
+        }
+
         return {
             ...card,
             contactName: contact?.name,
             tasksCount: card.tasks.length,
             tasksDoneCount: card.tasks.filter(t => t.completed).length,
+            status,
         }
     });
 

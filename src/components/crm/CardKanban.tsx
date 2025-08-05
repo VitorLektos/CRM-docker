@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Card as CardUI, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CardKanbanProps {
   id: string;
@@ -10,6 +11,7 @@ interface CardKanbanProps {
   contactName?: string;
   tasksCount?: number;
   tasksDoneCount?: number;
+  status?: "default" | "due" | "overdue";
   onClick?: () => void;
 }
 
@@ -19,11 +21,21 @@ export function CardKanban({
   contactName,
   tasksCount = 0,
   tasksDoneCount = 0,
+  status = "default",
   onClick,
 }: CardKanbanProps) {
+  const statusClasses = {
+    default: "bg-card",
+    due: "bg-card border-2 border-orange-400",
+    overdue: "bg-card border-2 border-red-500",
+  };
+
   return (
     <CardUI
-      className="cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+      className={cn(
+        "cursor-pointer shadow-sm hover:shadow-md transition-shadow",
+        statusClasses[status]
+      )}
       draggable
       onClick={onClick}
       data-card-id={id}

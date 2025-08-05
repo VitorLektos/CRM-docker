@@ -13,6 +13,7 @@ interface FunnelColumnProps {
     contactName?: string;
     tasksCount?: number;
     tasksDoneCount?: number;
+    status?: "default" | "due" | "overdue";
   }>;
   onCardClick?: (cardId: string) => void;
   onDropCard?: (cardId: string, newStageId: string) => void;
@@ -40,11 +41,11 @@ export function FunnelColumn({
 
   return (
     <div
-      className="flex flex-col bg-muted rounded-lg w-72 max-h-[80vh] flex-shrink-0"
+      className={`flex flex-col ${stageColor.bg} rounded-lg w-72 max-h-[80vh] flex-shrink-0`}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <h3 className={`font-semibold p-3 rounded-t-lg ${stageColor.bg} ${stageColor.text}`}>
+      <h3 className={`font-semibold p-3 ${stageColor.text}`}>
         {stageName}
       </h3>
       <div className="p-2 space-y-2 overflow-y-auto">
@@ -60,6 +61,7 @@ export function FunnelColumn({
               contactName={card.contactName}
               tasksCount={card.tasksCount}
               tasksDoneCount={card.tasksDoneCount}
+              status={card.status}
               onClick={() => onCardClick && onCardClick(card.id)}
             />
           </div>
