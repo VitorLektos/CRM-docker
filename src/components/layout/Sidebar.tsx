@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, ChevronLeft, ChevronRight, LogOut } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, ChevronLeft, ChevronRight, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
@@ -16,52 +16,61 @@ const navItems = [
   { to: "/contacts", icon: Users, label: "Contatos" },
   { to: "/calendar", icon: Calendar, label: "Calendário" },
   { to: "/goals", icon: Target, label: "Metas" },
+  { to: "/team", icon: Shield, label: "Equipe", adminOnly: true },
   { to: "/settings", icon: Settings, label: "Configurações" },
   { to: "/api", icon: Code, label: "API" },
 ];
 
-const NavLinks = ({ isMobile = false, isCollapsed = false }) => (
-  <nav className="flex flex-col gap-2 px-2">
-    {navItems.map(({ to, icon: Icon, label }) => {
-      const linkContent = (
-        <>
-          <Icon className="h-5 w-5" />
-          <span className={cn("truncate", isCollapsed && "hidden")}>{label}</span>
-        </>
-      );
+const NavLinks = ({ isMobile = false, isCollapsed = false }) => {
+  const { profile } = useAuth();
 
-      const link = (
-        <NavLink
-          to={to}
-          className={({ isActive }) =>
-            cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-              isCollapsed && "justify-center",
-              isActive ? "bg-muted text-primary" : "text-muted-foreground"
-            )
-          }
-        >
-          {linkContent}
-        </NavLink>
-      );
+  return (
+    <nav className="flex flex-col gap-2 px-2">
+      {navItems.map(({ to, icon: Icon, label, adminOnly }) => {
+        if (adminOnly && profile?.role !== 'admin') {
+          return null;
+        }
 
-      if (isMobile) {
-        return <SheetClose asChild key={to}>{link}</SheetClose>;
-      }
-
-      if (isCollapsed) {
-        return (
-          <Tooltip key={to} delayDuration={0}>
-            <TooltipTrigger asChild>{link}</TooltipTrigger>
-            <TooltipContent side="right">{label}</TooltipContent>
-          </Tooltip>
+        const linkContent = (
+          <>
+            <Icon className="h-5 w-5" />
+            <span className={cn("truncate", isCollapsed && "hidden")}>{label}</span>
+          </>
         );
-      }
 
-      return React.cloneElement(link, { key: to });
-    })}
-  </nav>
-);
+        const link = (
+          <NavLink
+            to={to}
+            className={({ isActive }) =>
+              cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                isCollapsed && "justify-center",
+                isActive ? "bg-muted text-primary" : "text-muted-foreground"
+              )
+            }
+          >
+            {linkContent}
+          </NavLink>
+        );
+
+        if (isMobile) {
+          return <SheetClose asChild key={to}>{link}</SheetClose>;
+        }
+
+        if (isCollapsed) {
+          return (
+            <Tooltip key={to} delayDuration={0}>
+              <TooltipTrigger asChild>{link}</TooltipTrigger>
+              <TooltipContent side="right">{label}</TooltipContent>
+            </Tooltip>
+          );
+        }
+
+        return React.cloneElement(link, { key: to });
+      })}
+    </nav>
+  );
+};
 
 const SidebarHeader = ({ isCollapsed }: { isCollapsed: boolean }) => (
     <div className={cn("flex h-14 items-center border-b px-4 lg:h-[60px]", isCollapsed ? 'justify-center px-2' : 'lg:px-6')}>
@@ -74,7 +83,7 @@ const SidebarHeader = ({ isCollapsed }: { isCollapsed: boolean }) => (
 
 export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onToggle: () => void }) {
   const isMobile = useIsMobile();
-  const { signOut } = useAuth();
+  const { signOut, profile } = useAuth();
 
   if (isMobile) {
     return (
@@ -89,21 +98,24 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean, onTog
             <SidebarHeader isCollapsed={false} />
             <div className="flex-1">
               <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-                {navItems.map(({ to, icon: Icon, label }) => (
-                  <SheetClose asChild key={to}>
-                    <NavLink
-                      to={to}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                          isActive ? "bg-muted text-primary" : "text-muted-foreground"
-                        }`
-                      }
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </NavLink>
-                  </SheetClose>
-                ))}
+                {navItems.map(({ to, icon: Icon, label, adminOnly }) => {
+                  if (adminOnly && profile?.role !== 'admin') return null;
+                  return (
+                    <SheetClose asChild key={to}>
+                      <NavLink
+                        to={to}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                            isActive ? "bg-muted text-primary" : "text-muted-foreground"
+                          }`
+                        }
+                      >
+                        <Icon className="h-4 w-4" />
+                        {label}
+                      </NavLink>
+                    </SheetClose>
+                  )
+                })}
               </nav>
             </div>
             <div className="mt-auto p-4 border-t">

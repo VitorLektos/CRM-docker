@@ -9,6 +9,7 @@ import { Header } from "@/components/layout/Header";
 import { useToast } from "@/hooks/use-toast";
 import { usePersistentState } from "@/hooks/use-persistent-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { usePermission } from "@/hooks/use-permission";
 
 interface GoalEntry {
   month: number;
@@ -18,6 +19,7 @@ interface GoalEntry {
 
 const Goals = () => {
   const { toast } = useToast();
+  const { isManagerOrAdmin } = usePermission();
   const [goalsHistory, setGoalsHistory] = usePersistentState<GoalEntry[]>('goals_history', []);
   
   const now = new Date();
@@ -85,13 +87,16 @@ const Goals = () => {
                   placeholder="Ex: 25000"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
+                  disabled={!isManagerOrAdmin()}
                 />
               </div>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleSave}>Salvar Meta</Button>
-          </CardFooter>
+          {isManagerOrAdmin() && (
+            <CardFooter>
+              <Button onClick={handleSave}>Salvar Meta</Button>
+            </CardFooter>
+          )}
         </Card>
         <Card>
           <CardHeader>

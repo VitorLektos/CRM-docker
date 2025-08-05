@@ -17,6 +17,7 @@ interface FunnelColumnProps {
   }>;
   onCardClick?: (cardId: string) => void;
   onDropCard?: (cardId: string, newStageId: string) => void;
+  canMoveCards: boolean;
 }
 
 export function FunnelColumn({
@@ -26,12 +27,16 @@ export function FunnelColumn({
   cards,
   onCardClick,
   onDropCard,
+  canMoveCards,
 }: FunnelColumnProps) {
   const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+    if (canMoveCards) {
+      e.preventDefault();
+    }
   };
 
   const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!canMoveCards) return;
     e.preventDefault();
     const cardId = e.dataTransfer.getData("text/plain");
     if (cardId && onDropCard) {
@@ -52,8 +57,8 @@ export function FunnelColumn({
         {cards.map((card) => (
           <div
             key={card.id}
-            draggable
-            onDragStart={(e) => e.dataTransfer.setData("text/plain", card.id)}
+            draggable={canMoveCards}
+            onDragStart={(e) => canMoveCards && e.dataTransfer.setData("text/plain", card.id)}
           >
             <CardKanban
               id={card.id}

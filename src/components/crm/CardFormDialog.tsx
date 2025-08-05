@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { TaskPriority, CardData, Contact, HistoryEntry } from "@/data/sample-data";
+import { usePermission } from "@/hooks/use-permission";
 
 const priorities = ["Baixa", "Média", "Alta", "Urgente"] as const;
 
@@ -84,6 +85,9 @@ export function CardFormDialog({
   contacts,
   stages,
 }: CardFormDialogProps) {
+  const { hasPermission } = usePermission();
+  const canCreateTasks = hasPermission('tasks.create');
+
   const form = useForm<CardFormValues>({
     resolver: zodResolver(cardSchema),
     defaultValues: {
@@ -219,12 +223,14 @@ export function CardFormDialog({
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-2 pt-4 mt-2 border-t">
-                    <Input value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} placeholder="Nova tarefa..." onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTask(); } }} />
-                    <Select value={newTaskPriority} onValueChange={(v: TaskPriority) => setNewTaskPriority(v)}><SelectTrigger className="w-[140px]"><SelectValue placeholder="Prioridade" /></SelectTrigger><SelectContent>{priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
-                    <Popover><PopoverTrigger asChild><Button variant="outline" size="icon"><CalendarIcon className="h-4 w-4" /></Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={newTaskDueDate} onSelect={setNewTaskDueDate} initialFocus /></PopoverContent></Popover>
-                    <Button type="button" onClick={handleAddTask}><PlusCircle className="h-4 w-4 mr-2" /> Adicionar</Button>
-                  </div>
+                  {canCreateTasks && (
+                    <div className="flex items-center gap-2 pt-4 mt-2 border-t">
+                      <Input value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} placeholder="Nova tarefa..." onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTask(); } }} />
+                      <Select value={newTaskPriority} onValueChange={(v: TaskPriority) => setNewTaskPriority(v)}><SelectTrigger className="w-[140px]"><SelectValue placeholder="Prioridade" /></SelectTrigger><SelectContent>{priorities.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent></Select>
+                      <Popover><PopoverTrigger asChild><Button variant="outline" size="icon"><CalendarIcon className="h-4 w-4" /></Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={newTaskDueDate} onSelect={setNewTaskDueDate} initialFocus /></PopoverContent></Popover>
+                      <Button type="button" onClick={handleAddTask}><PlusCircle className="h-4 w-4 mr-2" /> Adicionar</Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

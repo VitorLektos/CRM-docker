@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Profile {
   id: string;
-  role: 'admin' | 'user';
+  role: 'admin' | 'gestor' | 'user';
+  permissions: { [key: string]: boolean } | null;
   // Add other profile fields as needed
 }
 
@@ -28,19 +29,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const getSession = async () => {
+    const getSessionAndProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, role, permissions')
+          .eq('id', currentUser.id)
+          .single();
+        if (error) console.error("Error fetching profile:", error);
+        else setProfile(data);
+      }
       setIsLoading(false);
     };
 
-    getSession();
+    getSessionAndProfile();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, role, permissions')
+            .eq('id', currentUser.id)
+            .single();
+          if (error) console.error("Error fetching profile on auth change:", error);
+          else setProfile(data);
+        } else {
+          setProfile(null);
+        }
         setIsLoading(false);
       }
     );
@@ -49,27 +74,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       authListener.subscription.unsubscribe();
     };
   }, []);
-
-  useEffect(() => {
-    if (user && !profile) {
-      const fetchProfile = async () => {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching profile:", error);
-        } else {
-          setProfile(data);
-        }
-      };
-      fetchProfile();
-    } else if (!user) {
-      setProfile(null);
-    }
-  }, [user, profile]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
