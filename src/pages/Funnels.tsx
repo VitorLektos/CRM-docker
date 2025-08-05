@@ -34,28 +34,7 @@ import {
   type Funnel,
   type HistoryEntry
 } from "@/data/sample-data";
-
-const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
-  const [state, setState] = React.useState<T>(() => {
-    try {
-      const storedValue = window.localStorage.getItem(key);
-      return storedValue ? JSON.parse(storedValue) : defaultValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return defaultValue;
-    }
-  });
-
-  React.useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(state));
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
-    }
-  }, [key, state]);
-
-  return [state, setState];
-};
+import { usePersistentState } from "@/hooks/use-persistent-state";
 
 const Funnels = () => {
   const location = useLocation();
@@ -63,7 +42,7 @@ const Funnels = () => {
   const [funnels, setFunnels] = usePersistentState<Funnel[]>("funnels_data", sampleFunnels);
   const [stages, setStages] = usePersistentState<Stage[]>("stages_data", sampleStages);
   const [cards, setCards] = usePersistentState<CardData[]>("cards_data", sampleCards);
-  const [contacts] = React.useState<Contact[]>(sampleContacts);
+  const [contacts] = usePersistentState<Contact[]>("contacts_data", sampleContacts);
   const [selectedFunnelId, setSelectedFunnelId] = React.useState<string>(() => funnels[0]?.id || "");
   const [viewMode, setViewMode] = React.useState<'kanban' | 'list'>('kanban');
   
