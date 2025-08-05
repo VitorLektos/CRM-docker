@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, BookUser } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
@@ -10,9 +10,10 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/s
 const navItems = [
   { to: "/", icon: Home, label: "Dashboard" },
   { to: "/funnels", icon: KanbanSquare, label: "Funis" },
-  { to: "/contacts", icon: Users, label: "Contatos" },
+  { to: "/contacts", icon: BookUser, label: "Contatos" },
   { to: "/calendar", icon: Calendar, label: "Calendário" },
   { to: "/goals", icon: Target, label: "Metas" },
+  { to: "/users", icon: Users, label: "Usuários" },
   { to: "/settings", icon: Settings, label: "Configurações" },
   { to: "/api", icon: Code, label: "API" },
 ];

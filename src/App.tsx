@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import ApiDocs from "./pages/ApiDocs";
 import CalendarPage from "./pages/Calendar";
 import Goals from "./pages/Goals";
+import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/goals" element={<Goals />} />
+            <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/api" element={<ApiDocs />} />
           </Route>
