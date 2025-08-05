@@ -45,7 +45,7 @@ const Dashboard = () => {
             <CardDescription>Este mês</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">56</p>
+            <p className="text-xl font-semibold">56</p>
           </CardContent>
         </Card>
         <Card>
@@ -54,7 +54,7 @@ const Dashboard = () => {
             <CardDescription>Este mês</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">86</p>
+            <p className="text-xl font-semibold">86</p>
           </CardContent>
         </Card>
         <Card>
@@ -63,7 +63,7 @@ const Dashboard = () => {
             <CardDescription>Total</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">25</p>
+            <p className="text-xl font-semibold">25</p>
           </CardContent>
         </Card>
         <Card>
@@ -72,7 +72,7 @@ const Dashboard = () => {
             <CardDescription>Total faturado</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">R$ 5.500</p>
+            <p className="text-xl font-semibold">R$ 5.500</p>
           </CardContent>
         </Card>
       </div>
@@ -99,7 +99,7 @@ const Dashboard = () => {
                 />
                 <Legend iconSize={10} wrapperStyle={{fontSize: "14px"}} />
                 <Bar dataKey="contatos" fill="hsl(var(--primary))" name="Contatos" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="negocios" fill="hsl(var(--secondary-foreground))" name="Negócios" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="negocios" fill="hsl(var(--foreground))" name="Negócios" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -109,7 +109,7 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle>Receita Mensal</CardTitle>
             <CardDescription>Evolução da receita nos últimos meses</CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyRevenueData}>
