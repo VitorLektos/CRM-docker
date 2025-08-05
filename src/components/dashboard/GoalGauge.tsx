@@ -29,15 +29,15 @@ export function GoalGauge({ value, goal }: GoalGaugeProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center justify-center">
-        <div className="w-full h-48 relative">
+        <div className="w-full h-56 relative">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
-              innerRadius="70%"
+              innerRadius="65%"
               outerRadius="100%"
               data={data}
               startAngle={180}
               endAngle={0}
-              barSize={30}
+              barSize={40}
             >
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
               <RadialBar
@@ -45,12 +45,12 @@ export function GoalGauge({ value, goal }: GoalGaugeProps) {
                 dataKey="value"
                 angleAxisId={0}
                 fill={fillColor}
-                cornerRadius={15}
+                cornerRadius={20}
               />
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-4xl font-bold" style={{ color: fillColor }}>
+            <span className="text-3xl font-semibold" style={{ color: fillColor }}>
               {Math.round(percentage)}%
             </span>
           </div>
