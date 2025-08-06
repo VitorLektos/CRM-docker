@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, KanbanSquare, Users, Settings, Code, Menu, Rocket, Calendar, Target, BookUser, LogOut, ChevronsLeft } from "lucide-react";
+import { Home, KanbanSquare, Users, Settings, Code, Menu, Calendar, Target, BookUser, LogOut, ChevronsLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import * as React from "react";
@@ -74,7 +74,8 @@ const NavLinks = ({ isMobile = false, isCollapsed = false }) => {
 const SidebarHeader = ({ isCollapsed = false }) => (
     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <NavLink to="/" className="flex items-center gap-2 font-semibold">
-            <Rocket className="h-6 w-6 text-primary" />
+            <img src="https://aceleradorestrategico.com.br/wp-content/uploads/2024/07/logo-acelerador-estrategico-preto.png" alt="Acelerador Estratégico" className="h-6 block dark:hidden" />
+            <img src="https://aceleradorestrategico.com.br/wp-content/uploads/2024/12/acelerador-logo-branco.png" alt="Acelerador Estratégico" className="h-6 hidden dark:block" />
             <span className={cn(isCollapsed ? "sr-only" : "")}>Acelerador</span>
         </NavLink>
     </div>

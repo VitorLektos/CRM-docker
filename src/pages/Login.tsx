@@ -5,7 +5,6 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Rocket } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,7 +31,8 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-8">
         <div className="text-center">
-            <Rocket className="mx-auto h-12 w-12 text-primary" />
+            <img src="https://aceleradorestrategico.com.br/wp-content/uploads/2024/07/logo-acelerador-estrategico-preto.png" alt="Acelerador Estratégico" className="mx-auto h-12 block dark:hidden" />
+            <img src="https://aceleradorestrategico.com.br/wp-content/uploads/2024/12/acelerador-logo-branco.png" alt="Acelerador Estratégico" className="mx-auto h-12 hidden dark:block" />
             <h2 className="mt-6 text-3xl font-bold text-foreground">
                 Acesse sua conta
             </h2>
