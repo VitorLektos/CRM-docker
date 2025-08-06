@@ -72,11 +72,9 @@ const NavLinks = ({ isMobile = false, isCollapsed = false }) => {
 };
 
 const SidebarHeader = ({ isCollapsed = false }) => (
-    <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+    <div className={cn("flex h-14 items-center border-b lg:h-[60px]", isCollapsed ? "justify-center px-2" : "justify-start px-4")}>
         <NavLink to="/" className="flex items-center gap-2 font-semibold">
-            <img src="/logo-black.png" alt="Acelerador Estratégico" className="h-6 block dark:hidden" />
-            <img src="/logo-white.png" alt="Acelerador Estratégico" className="h-6 hidden dark:block" />
-            <span className={cn(isCollapsed ? "sr-only" : "")}>Acelerador</span>
+            <img src="/acelerador-logo.png" alt="Acelerador Estratégico" className={cn("w-auto", isCollapsed ? "w-full" : "h-9")} />
         </NavLink>
     </div>
 );

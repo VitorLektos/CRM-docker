@@ -31,8 +31,7 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md p-8 space-y-8">
         <div className="text-center">
-            <img src="/logo-black.png" alt="Acelerador Estratégico" className="mx-auto h-12 block dark:hidden" />
-            <img src="/logo-white.png" alt="Acelerador Estratégico" className="mx-auto h-12 hidden dark:block" />
+            <img src="/acelerador-logo.png" alt="Acelerador Estratégico" className="mx-auto h-16" />
             <h2 className="mt-6 text-3xl font-bold text-foreground">
                 Acesse sua conta
             </h2>
