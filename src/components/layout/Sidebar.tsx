@@ -74,8 +74,8 @@ const NavLinks = ({ isMobile = false, isCollapsed = false }) => {
 const SidebarHeader = ({ isCollapsed = false }) => (
     <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <NavLink to="/" className="flex items-center gap-2 font-semibold">
-            <img src="https://aceleradorestrategico.com.br/wp-content/uploads/2024/07/logo-acelerador-estrategico-preto.png" alt="Acelerador Estratégico" className="h-6 block dark:hidden" />
-            <img src="https://aceleradorestrategico.com.br/wp-content/uploads/2024/12/acelerador-logo-branco.png" alt="Acelerador Estratégico" className="h-6 hidden dark:block" />
+            <img src="/logo-black.png" alt="Acelerador Estratégico" className="h-6 block dark:hidden" />
+            <img src="/logo-white.png" alt="Acelerador Estratégico" className="h-6 hidden dark:block" />
             <span className={cn(isCollapsed ? "sr-only" : "")}>Acelerador</span>
         </NavLink>
     </div>
