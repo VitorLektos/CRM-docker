@@ -9,9 +9,9 @@ const corsHeaders = {
 
 // A chave JWT_SECRET precisa ser a mesma do seu projeto Supabase.
 // É crucial que ela seja definida como uma variável de ambiente na sua Edge Function.
-const JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET');
+const JWT_SECRET = Deno.env.get('JWT_SECRET');
 if (!JWT_SECRET) {
-    throw new Error("SUPABASE_JWT_SECRET não está definida nas variáveis de ambiente da função.");
+    throw new Error("JWT_SECRET não está definida nas variáveis de ambiente da função.");
 }
 
 serve(async (req) => {
