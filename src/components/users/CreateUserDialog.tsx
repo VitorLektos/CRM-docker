@@ -95,7 +95,7 @@ export function CreateUserDialog({ isOpen, onOpenChange, onCreate, isLoading }: 
                 <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="joao.silva@exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem><FormLabel>Senha</FormLabel><FormControl><Input type="password" placeholder="••••••••" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Senha</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="role" render={({ field }) => (
                 <FormItem><FormLabel>Função</FormLabel>
