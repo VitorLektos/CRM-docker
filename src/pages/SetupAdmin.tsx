@@ -46,13 +46,31 @@ const SetupAdmin = () => {
   const handleFormSubmit = async (values: SetupFormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.functions.invoke('create-user', {
+      const { data, error: invokeError } = await supabase.functions.invoke('create-user', {
         body: { ...values, role: 'admin' }, // Always create an admin
       });
 
-      if (error) {
-        const errorMessage = error.context?.error || error.message;
-        throw new Error(errorMessage);
+      if (invokeError) {
+        let userFacingMessage = "Ocorreu um erro ao criar o administrador.";
+        // Check if the error has a data property with a specific message from the edge function
+        if (invokeError.data && invokeError.data.error) {
+          userFacingMessage = invokeError.data.error;
+        } else if (invokeError.message) {
+          userFacingMessage = invokeError.message;
+        }
+
+        // Specific handling for "email already in use" (status 409)
+        if (invokeError.status === 409) {
+          toast({ 
+            title: "Conta já existe", 
+            description: "Este e-mail já está registrado. Por favor, tente fazer login.", 
+            variant: "default" // Not destructive, it's an expected scenario
+          });
+          navigate('/login'); // Redirect to login
+          return; // Stop further execution
+        }
+        
+        throw new Error(userFacingMessage); // Re-throw for generic error handling
       }
 
       toast({ title: "Administrador criado!", description: "Você já pode fazer login com suas novas credenciais." });
