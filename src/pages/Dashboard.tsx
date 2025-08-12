@@ -16,7 +16,10 @@ import {
   CartesianGrid,
 } from "recharts";
 import { GoalGauge } from "@/components/dashboard/GoalGauge";
-import { sampleCards, sampleStages, type CardData, type Stage } from "@/data/sample-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { CardData, Stage } from "@/data/sample-data";
 
 const monthlyActivityData = [
   { month: "Jan", contatos: 65, negocios: 28 },
@@ -36,32 +39,46 @@ const monthlyRevenueData = [
     { month: "Jun", receita: 5500 },
 ];
 
-const usePersistentState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
-  const [state, setState] = React.useState<T>(() => {
-    try {
-      const storedValue = window.localStorage.getItem(key);
-      return storedValue ? JSON.parse(storedValue) : defaultValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return defaultValue;
-    }
-  });
+const Dashboard = () => {
+  const { toast } = useToast();
+  const [loading, setLoading] = React.useState(true);
+  const [goal, setGoal] = React.useState(0);
+  const [cards, setCards] = React.useState<CardData[]>([]);
+  const [stages, setStages] = React.useState<Stage[]>([]);
 
   React.useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(state));
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
-    }
-  }, [key, state]);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const now = new Date();
+        const currentMonth = now.getMonth() + 1;
+        const currentYear = now.getFullYear();
 
-  return [state, setState];
-};
+        const [cardsRes, stagesRes, goalRes] = await Promise.all([
+          supabase.from("cards").select("*"),
+          supabase.from("stages").select("*"),
+          supabase.from("goals").select("goal_amount").eq("month", currentMonth).eq("year", currentYear).single(),
+        ]);
 
-const Dashboard = () => {
-  const [goal] = usePersistentState<number>('monthly_goal', 10000);
-  const [cards] = usePersistentState<CardData[]>("cards_data", sampleCards);
-  const [stages] = usePersistentState<Stage[]>("stages_data", sampleStages);
+        if (cardsRes.error) throw cardsRes.error;
+        if (stagesRes.error) throw stagesRes.error;
+        
+        setCards(cardsRes.data || []);
+        setStages(stagesRes.data || []);
+        if (goalRes.data) {
+          setGoal(goalRes.data.goal_amount);
+        }
+
+      } catch (error: any) {
+        if (error.code !== 'PGRST116') { // Ignore error for no goal found
+          toast({ title: "Erro ao carregar dados do dashboard", description: error.message, variant: "destructive" });
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [toast]);
 
   const {
     currentRevenue,
@@ -71,20 +88,16 @@ const Dashboard = () => {
     leadSources,
     pendingTasks,
   } = React.useMemo(() => {
-    const closedStageIds = stages.filter(s => s.name.toLowerCase() === 'fechado').map(s => s.id);
+    const closedStageIds = stages.filter(s => s.name.toLowerCase().includes('fechado')).map(s => s.id);
 
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
     const closedCardsThisMonth = cards.filter(card => {
-      if (!closedStageIds.includes(card.stageId)) return false;
-      const currentStageName = stages.find(s => s.id === card.stageId)?.name;
-      if (!currentStageName) return false;
-      const closedEntry = card.history?.slice().reverse().find(h => h.description.includes(`para '${currentStageName}'`));
-      const relevantDateStr = closedEntry?.date || card.createdAt;
-      const relevantDate = new Date(relevantDateStr);
-      return relevantDate.getMonth() === currentMonth && relevantDate.getFullYear() === currentYear;
+      if (!card.closed_at) return false;
+      const closedDate = new Date(card.closed_at);
+      return closedDate.getMonth() === currentMonth && closedDate.getFullYear() === currentYear;
     });
 
     const _currentRevenue = closedCardsThisMonth.reduce((sum, card) => sum + (card.value || 0), 0);
@@ -118,6 +131,25 @@ const Dashboard = () => {
       pendingTasks: _pendingTasks,
     };
   }, [cards, stages]);
+
+  if (loading) {
+    return (
+      <>
+        <Header title="Dashboard" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-48 lg:col-span-2" />
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

@@ -33,11 +33,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarIcon, PlusCircle, Trash2, Mail, Phone, User, Clock } from "lucide-react";
+import { CalendarIcon, PlusCircle, Trash2, Mail, Phone, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { CardData, Contact, HistoryEntry, TaskPriority } from "@/data/sample-data";
+import { CardData, Contact, TaskPriority } from "@/data/sample-data";
 
 const priorities = ["Baixa", "Média", "Alta", "Urgente"] as const;
 
@@ -59,7 +58,7 @@ const cardSchema = z.object({
   stageId: z.string().min(1, "O estágio é obrigatório."),
   tasks: z.array(taskSchema).optional(),
   value: z.preprocess(
-    (val) => (val === "" ? undefined : Number(val)),
+    (val) => (val === "" || val === null ? undefined : Number(String(val).replace(/[^0-9.,-]/g, '').replace(',', '.'))),
     z.number({ invalid_type_error: "Deve ser um número" }).min(0).optional()
   ),
   source: z.string().optional(),
@@ -70,7 +69,7 @@ type CardFormValues = z.infer<typeof cardSchema>;
 interface CardFormDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onSave: (data: CardFormValues, initialData: Partial<CardData> | null) => void;
+  onSave: (data: CardFormValues) => void;
   initialData: Partial<CardData> | null;
   contacts: Contact[];
   stages: { id: string; name: string }[];
@@ -141,7 +140,12 @@ export function CardFormDialog({
   const associatedContact = contacts.find(c => c.id === contactId);
 
   const onSubmit = (data: CardFormValues) => {
-    onSave(data, initialData);
+    const submissionData = {
+      ...initialData,
+      ...data,
+      tasks: data.tasks?.map(t => ({...t, dueDate: t.dueDate?.toISOString()})) || []
+    };
+    onSave(submissionData as any);
   };
 
   return (
@@ -169,7 +173,7 @@ export function CardFormDialog({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="value" render={({ field }) => (
-                      <FormItem><FormLabel>Valor do Negócio (R$)</FormLabel><FormControl><Input type="number" placeholder="1500,00" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel>Valor do Negócio (R$)</FormLabel><FormControl><Input type="number" placeholder="1500.00" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="source" render={({ field }) => (
                       <FormItem><FormLabel>Fonte</FormLabel><FormControl><Input placeholder="Ex: Indicação" {...field} /></FormControl><FormMessage /></FormItem>
@@ -195,7 +199,7 @@ export function CardFormDialog({
                   )}
                   {initialData?.createdAt && (
                     <p className="text-xs text-muted-foreground pt-2">
-                      Criado em: {format(new Date(initialData.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      Criado em: {format(new Date(initialData.createdAt), "dd/MM/yyyy 'às' HH:mm")}
                     </p>
                   )}
                 </CardContent>
@@ -227,25 +231,6 @@ export function CardFormDialog({
                   </div>
                 </CardContent>
               </Card>
-
-              {initialData?.id && (
-                <Card>
-                  <CardHeader><CardTitle>Histórico</CardTitle></CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      {initialData?.history?.slice().reverse().map(entry => (
-                        <li key={entry.id} className="flex items-start gap-3">
-                          <div className="bg-primary/10 rounded-full p-1.5 mt-1"><Clock className="w-3 h-3 text-primary" /></div>
-                          <div>
-                            <p className="text-sm">{entry.description}</p>
-                            <p className="text-xs text-muted-foreground">{format(new Date(entry.date), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              )}
             </div>
             <DialogFooter className="p-4 border-t mt-auto shrink-0">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>

@@ -1,12 +1,6 @@
 "use client";
 
 // Interfaces
-export interface HistoryEntry {
-  id: string;
-  date: string;
-  description: string;
-}
-
 export type TaskPriority = "Baixa" | "Média" | "Alta" | "Urgente";
 
 export interface Task {
@@ -36,7 +30,7 @@ export interface CardData {
   value: number;
   source?: string;
   createdAt: string;
-  history: HistoryEntry[];
+  closed_at?: string | null;
 }
 
 export interface Stage {
@@ -84,7 +78,7 @@ export const sampleStages: Stage[] = [
 ];
 
 export const sampleCards: CardData[] = [
-  { id: "card-1", title: "Contato João", companyName: "Tech Solutions", businessType: "SaaS", description: "Interessado no produto X", contactId: "contact-1", tasks: [{id: 'task-1', text: 'Follow-up call', completed: false, dueDate: '2024-09-10', priority: 'Alta'}], stageId: "stage-1", value: 1500, source: "Indicação", createdAt: new Date(2024, 7, 1).toISOString(), history: [{ id: 'hist-1', date: new Date(2024, 7, 1).toISOString(), description: 'Card criado.' }] },
-  { id: "card-2", title: "Contato Ana", companyName: "Inova Corp", businessType: "Consultoria", description: "Aguardando resposta", contactId: "contact-4", tasks: [{id: 'task-2', text: 'Enviar proposta', completed: true, priority: 'Média'}, {id: 'task-3', text: 'Agendar reunião', completed: false, priority: 'Urgente'}], stageId: "stage-2", value: 3200, source: "Website", createdAt: new Date(2024, 6, 28).toISOString(), history: [{ id: 'hist-2', date: new Date(2024, 6, 28).toISOString(), description: 'Card criado.' }] },
-  { id: "card-3", title: "Lead do Ebook", companyName: "Marketing Digital BR", businessType: "Agência", description: "Baixou o ebook de marketing", contactId: "contact-3", tasks: [], stageId: "stage-5", value: 500, source: "Marketing de Conteúdo", createdAt: new Date(2024, 7, 5).toISOString(), history: [{ id: 'hist-3', date: new Date(2024, 7, 5).toISOString(), description: 'Card criado.' }] },
+  { id: "card-1", title: "Contato João", companyName: "Tech Solutions", businessType: "SaaS", description: "Interessado no produto X", contactId: "contact-1", tasks: [{id: 'task-1', text: 'Follow-up call', completed: false, dueDate: '2024-09-10', priority: 'Alta'}], stageId: "stage-1", value: 1500, source: "Indicação", createdAt: new Date(2024, 7, 1).toISOString() },
+  { id: "card-2", title: "Contato Ana", companyName: "Inova Corp", businessType: "Consultoria", description: "Aguardando resposta", contactId: "contact-4", tasks: [{id: 'task-2', text: 'Enviar proposta', completed: true, priority: 'Média'}, {id: 'task-3', text: 'Agendar reunião', completed: false, priority: 'Urgente'}], stageId: "stage-2", value: 3200, source: "Website", createdAt: new Date(2024, 6, 28).toISOString() },
+  { id: "card-3", title: "Lead do Ebook", companyName: "Marketing Digital BR", businessType: "Agência", description: "Baixou o ebook de marketing", contactId: "contact-3", tasks: [], stageId: "stage-5", value: 500, source: "Marketing de Conteúdo", createdAt: new Date(2024, 7, 5).toISOString() },
 ];
