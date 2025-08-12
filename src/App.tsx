@@ -16,7 +16,6 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Skeleton } from "./components/ui/skeleton";
-import SetupAdmin from "./pages/SetupAdmin";
 
 const queryClient = new QueryClient();
 
@@ -47,7 +46,7 @@ const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/setup-admin" element={<SetupAdmin />} />
+      {/* Removed the /setup-admin route */}
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/funnels" element={<Funnels />} />

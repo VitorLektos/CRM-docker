@@ -22,7 +22,7 @@ import { FunnelViewToggle } from "@/components/crm/FunnelViewToggle";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Card as UiCard } from "@/components/ui/card";
-import { stageColorStyles, type CardData, type Stage, type Funnel, type Contact } from "@/data/sample-data";
+import { stageColorStyles, type CardData, type Stage, type Funnel, type Contact, type TaskPriority } from "@/data/sample-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -66,7 +66,16 @@ const Funnels = () => {
 
       const fetchedFunnels = funnelsRes.data as Funnel[];
       setFunnels(fetchedFunnels);
-      setStages(stagesRes.data.map((s, i) => ({ ...s, color: stageColorStyles[i % stageColorStyles.length] })) as Stage[]);
+      
+      // Correctly map funnel_id to funnelId and add color
+      setStages(stagesRes.data.map((s: any, i: number) => ({ 
+        id: s.id, 
+        name: s.name, 
+        funnelId: s.funnel_id, // Corrected: map from snake_case to camelCase
+        position: s.position,
+        color: stageColorStyles[i % stageColorStyles.length] 
+      })) as Stage[]);
+      
       setCards(cardsRes.data as CardData[]);
       setContacts(contactsRes.data as Contact[]);
 
@@ -250,13 +259,41 @@ const Funnels = () => {
 
   const selectedFunnel = funnels.find(f => f.id === selectedFunnelId) || null;
   const currentStages = stages.filter((stage) => stage.funnelId === selectedFunnelId);
+  
+  const getCardStatus = (card: CardData): "default" | "due" | "overdue" => {
+    if (!card.tasks || card.tasks.length === 0) return "default";
+
+    const incompleteTasks = card.tasks.filter(task => !task.completed && task.dueDate);
+    if (incompleteTasks.length === 0) return "default";
+
+    const now = new Date();
+    const hasOverdue = incompleteTasks.some(task => task.dueDate && new Date(task.dueDate) < now);
+    if (hasOverdue) return "overdue";
+
+    const hasDueSoon = incompleteTasks.some(task => {
+      if (!task.dueDate) return false;
+      const dueDate = new Date(task.dueDate);
+      const diffTime = dueDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 3; // Due within 3 days
+    });
+    if (hasDueSoon) return "due";
+
+    return "default";
+  };
+
   const currentCards = cards
     .filter((card) => currentStages.map(s => s.id).includes(card.stageId))
     .map(card => {
         const contact = contacts.find(c => c.id === card.contactId);
-        let status: "default" | "due" | "overdue" = "default";
-        // Status logic remains the same
-        return { ...card, contactName: contact?.name, tasksCount: card.tasks?.length || 0, tasksDoneCount: card.tasks?.filter(t => t.completed).length || 0, status };
+        const status = getCardStatus(card); // Use the new status logic
+        return { 
+          ...card, 
+          contactName: contact?.name, 
+          tasksCount: card.tasks?.length || 0, 
+          tasksDoneCount: card.tasks?.filter(t => t.completed).length || 0, 
+          status 
+        };
     });
 
   if (loading) {
