@@ -145,7 +145,12 @@ const Funnels = () => {
   };
 
   const handleSaveCard = async (data: any) => {
-    const cardData = { ...data, created_by: user?.id };
+    if (!user?.id) {
+      toast({ title: "Erro", description: "Usuário não autenticado. Não foi possível criar/salvar o card.", variant: "destructive" });
+      return;
+    }
+
+    const cardData = { ...data, created_by: user.id };
     let error;
 
     if (cardData.id) {
