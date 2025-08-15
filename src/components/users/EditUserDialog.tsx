@@ -37,6 +37,7 @@ const availablePermissions = [
   { key: 'delete_funnels', label: 'Excluir Funis' },
   { key: 'manage_stages', label: 'Gerenciar Estágios' },
   { key: 'manage_goals', label: 'Gerenciar Metas' },
+  { key: 'manage_cards', label: 'Gerenciar Cards' }, // Nova permissão adicionada
 ];
 
 export function EditUserDialog({ isOpen, onOpenChange, user, onSave }: EditUserDialogProps) {
