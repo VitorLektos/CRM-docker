@@ -19,16 +19,19 @@ const DraggableCard: React.FC<DraggableCardProps> = ({ card, index, contactName 
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className="mb-3 bg-white shadow-sm rounded-lg border border-gray-200"
+          className="mb-3 bg-white shadow-sm rounded-lg border border-gray-200 hover:border-blue-500 transition-colors"
         >
-          <CardHeader className="p-3 pb-0">
+          <CardHeader className="p-3 pb-1">
             <CardTitle className="text-sm font-medium text-gray-800">{card.title}</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-1 text-xs text-gray-600 space-y-1">
-            {contactName && <p className="text-blue-700 font-medium">Contato: {contactName}</p>}
-            {card.description && <p className="mb-1">{card.description}</p>}
-            {typeof card.value === 'number' && <p className="font-semibold">Valor: R$ {card.value.toFixed(2)}</p>}
-            {card.company_name && <p>Empresa: {card.company_name}</p>}
+            {card.company_name && <p className="font-semibold text-gray-700">{card.company_name}</p>}
+            {contactName && <p className="text-blue-600">{contactName}</p>}
+            {typeof card.value === 'number' && (
+              <p className="font-bold text-green-700">
+                R$ {card.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            )}
           </CardContent>
         </ShadcnCard>
       )}
