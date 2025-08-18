@@ -1,69 +1,87 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+// @ts-ignore
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
-const corsHeaders: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json",
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
+serve(async (req: Request) => {
+  // Handle CORS preflight request
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders });
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-  const authHeader = req.headers.get("Authorization") || "";
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
-
-  const { data: userRes } = await userClient.auth.getUser();
-  const user = userRes?.user;
-  if (!user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
-  }
-
-  let payload: any;
   try {
-    payload = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: corsHeaders });
+    const supabase = createClient(
+      // @ts-ignore
+      Deno.env.get('SUPABASE_URL')!,
+      // @ts-ignore
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await req.json();
+    const { tasks, ...cardData } = body;
+
+    // Validate required card data
+    if (!cardData.title || !cardData.stage_id) {
+      return new Response(JSON.stringify({ error: 'Title and stage_id are required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 1. Create the card
+    const { data: newCard, error: cardError } = await supabase
+      .from('cards')
+      .insert({ ...cardData, created_by: user.id })
+      .select()
+      .single();
+
+    if (cardError) {
+      console.error('Card creation error:', cardError);
+      throw new Error(`Failed to create card: ${cardError.message}`);
+    }
+
+    // 2. Create associated tasks, if any
+    if (tasks && Array.isArray(tasks) && tasks.length > 0) {
+      const tasksToInsert = tasks.map((task: any) => ({
+        ...task,
+        card_id: newCard.id,
+        created_by: user.id,
+      }));
+
+      const { error: tasksError } = await supabase.from('tasks').insert(tasksToInsert);
+
+      if (tasksError) {
+        console.error('Tasks creation error:', tasksError);
+        // Note: In a real-world scenario, you might want to roll back the card creation here.
+        // For simplicity, we'll just log the error.
+        throw new Error(`Card created, but failed to create tasks: ${tasksError.message}`);
+      }
+    }
+
+    return new Response(JSON.stringify(newCard), {
+      status: 201,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Server error:', error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
-
-  const { title, stage_id, contact_id, description, value, source, company_name, business_type, closed_at } = payload || {};
-
-  if (!title || typeof title !== "string" || !stage_id || typeof stage_id !== "string") {
-    return new Response(JSON.stringify({ error: "title (string) and stage_id (string) are required" }), { status: 400, headers: corsHeaders });
-  }
-
-  const insertObj: Record<string, any> = {
-    title,
-    stage_id,
-    contact_id: contact_id || null,
-    description: description ?? null,
-    value: typeof value === "number" ? value : null,
-    source: source ?? null,
-    company_name: company_name ?? null,
-    business_type: business_type ?? null,
-    closed_at: closed_at ?? null,
-    created_by: user.id,
-  };
-
-  const admin = createClient(supabaseUrl, serviceRoleKey);
-  const { data, error } = await admin.from("cards").insert(insertObj).select().single();
-
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders });
-  }
-
-  return new Response(JSON.stringify({ data }), { status: 200, headers: corsHeaders });
 });
