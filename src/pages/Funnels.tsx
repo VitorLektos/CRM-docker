@@ -1,865 +1,425 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  DndContext,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { arrayMove } from "@dnd-kit/sortable";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-}
-from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon, PlusCircle, Trash2, Edit, XCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "react-hot-toast";
-import { Card as ShadcnCard, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DraggableCard } from "@/components/DraggableCard";
-import { DraggableStage } from "@/components/DraggableStage";
+import React, { useState, useEffect } from 'react';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { PlusCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'react-hot-toast';
+import DraggableStage from '@/components/DraggableStage';
+import DraggableCard from '@/components/DraggableCard';
+import { Funnel, Stage, Card as CardType } from '../types/index'; // Caminho de importação ajustado
 
-interface Funnel {
-  id: string;
-  name: string;
-}
-
-interface Stage {
-  id: string;
-  name: string;
-  position: number;
-  funnel_id: string;
-  cards: Card[];
-}
-
-interface Card {
-  id: string;
-  stage_id: string;
-  contact_id?: string;
-  title: string;
-  description?: string;
-  value?: number;
-  source?: string;
-  company_name?: string;
-  business_type?: string;
-  closed_at?: string;
-  tasks?: Task[];
-}
-
-interface Task {
-  id: string;
-  text: string;
-  completed: boolean;
-  due_date?: string;
-  priority?: 'low' | 'medium' | 'high';
-}
-
-export default function Funnels() {
+const Funnels: React.FC = () => {
   const [funnels, setFunnels] = useState<Funnel[]>([]);
-  const [selectedFunnel, setSelectedFunnel] = useState<string | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
-  const [newFunnelName, setNewFunnelName] = useState("");
-  const [isFunnelModalOpen, setIsFunnelModalOpen] = useState(false);
-  const [isStageModalOpen, setIsStageModalOpen] = useState(false);
-  const [newStageName, setNewStageName] = useState("");
-  const [editingStage, setEditingStage] = useState<Stage | null>(null);
-  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
-  const [editingCard, setEditingCard] = useState<Card | null>(null);
-  const [currentStageIdForCard, setCurrentStageIdForCard] = useState<string | null>(null);
-  const [cardForm, setCardForm] = useState<Partial<Card>>({ tasks: [] });
-  const [newTaskText, setNewTaskText] = useState("");
-  const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>(undefined);
-  const [newTaskPriority, setNewTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor)
-  );
-
-  const fetchFunnels = useCallback(async () => {
-    const { data, error } = await supabase.from("funnels").select("*");
-    if (error) {
-      console.error("Error fetching funnels:", error);
-      toast.error("Erro ao carregar funis.");
-    } else {
-      setFunnels(data);
-      if (data.length > 0 && !selectedFunnel) {
-        setSelectedFunnel(data[0].id);
-      }
-    }
-  }, [selectedFunnel]);
-
-  const fetchStagesAndCards = useCallback(async () => {
-    if (!selectedFunnel) {
-      setStages([]);
-      return;
-    }
-    const { data: stagesData, error: stagesError } = await supabase
-      .from("stages")
-      .select("*")
-      .eq("funnel_id", selectedFunnel)
-      .order("position", { ascending: true });
-
-    if (stagesError) {
-      console.error("Error fetching stages:", stagesError);
-      toast.error("Erro ao carregar estágios.");
-      return;
-    }
-
-    const stagesWithCards = await Promise.all(
-      stagesData.map(async (stage) => {
-        const { data: cardsData, error: cardsError } = await supabase
-          .from("cards")
-          .select("*")
-          .eq("stage_id", stage.id);
-
-        if (cardsError) {
-          console.error(`Error fetching cards for stage ${stage.id}:`, cardsError);
-          toast.error(`Erro ao carregar cards para o estágio ${stage.name}.`);
-          return { ...stage, cards: [] };
-        }
-        return { ...stage, cards: cardsData };
-      })
-    );
-    setStages(stagesWithCards);
-  }, [selectedFunnel]);
+  const [cards, setCards] = useState<CardType[]>([]);
+  const [newFunnelName, setNewFunnelName] = useState('');
+  const [isAddFunnelDialogOpen, setIsAddFunnelDialogOpen] = useState(false);
+  const [isAddStageDialogOpen, setIsAddStageDialogOpen] = useState(false);
+  const [newStageName, setNewStageName] = useState('');
+  const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
+  const [isEditStageDialogOpen, setIsEditStageDialogOpen] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
+  const [isAddCardDialogOpen, setIsAddCardDialogOpen] = useState(false);
+  const [selectedStageIdForCard, setSelectedStageIdForCard] = useState<string | null>(null);
+  const [newCardTitle, setNewCardTitle] = useState('');
+  const [isDeleteStageDialogOpen, setIsDeleteStageDialogOpen] = useState(false);
+  const [stageToDeleteId, setStageToDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchFunnels();
-  }, [fetchFunnels]);
+    fetchStages();
+    fetchCards();
+  }, []);
 
-  useEffect(() => {
-    fetchStagesAndCards();
-  }, [fetchStagesAndCards, selectedFunnel]);
+  const fetchFunnels = async () => {
+    const { data, error } = await supabase.from('funnels').select('*');
+    if (error) {
+      toast.error('Erro ao carregar funis: ' + error.message);
+    } else {
+      setFunnels(data);
+      if (data.length > 0 && !selectedFunnelId) {
+        setSelectedFunnelId(data[0].id);
+      }
+    }
+  };
 
-  const handleCreateFunnel = async () => {
+  const fetchStages = async () => {
+    const { data, error } = await supabase.from('stages').select('*').order('position', { ascending: true });
+    if (error) {
+      toast.error('Erro ao carregar estágios: ' + error.message);
+    } else {
+      setStages(data);
+    }
+  };
+
+  const fetchCards = async () => {
+    const { data, error } = await supabase.from('cards').select('*');
+    if (error) {
+      toast.error('Erro ao carregar cards: ' + error.message);
+    } else {
+      setCards(data);
+    }
+  };
+
+  const handleAddFunnel = async () => {
     if (!newFunnelName.trim()) {
-      toast.error("O nome do funil não pode ser vazio.");
+      toast.error('O nome do funil não pode ser vazio.');
       return;
     }
-    const { data, error } = await supabase
-      .from("funnels")
-      .insert([{ name: newFunnelName }])
-      .select();
+    const { data, error } = await supabase.from('funnels').insert({ name: newFunnelName }).select();
     if (error) {
-      console.error("Error creating funnel:", error);
-      toast.error("Erro ao criar funil.");
+      toast.error('Erro ao adicionar funil: ' + error.message);
     } else {
-      setFunnels((prev) => [...prev, data[0]]);
-      setSelectedFunnel(data[0].id);
-      setNewFunnelName("");
-      setIsFunnelModalOpen(false);
-      toast.success("Funil criado com sucesso!");
+      setFunnels([...funnels, data[0]]);
+      setNewFunnelName('');
+      setIsAddFunnelDialogOpen(false);
+      toast.success('Funil adicionado com sucesso!');
     }
   };
 
-  const handleDeleteFunnel = async (funnelId: string) => {
-    if (!window.confirm("Tem certeza que deseja deletar este funil e todos os seus estágios e cards?")) {
+  const handleAddStage = async () => {
+    if (!newStageName.trim() || !selectedFunnelId) {
+      toast.error('Nome do estágio e funil são obrigatórios.');
       return;
     }
-    const { error } = await supabase.from("funnels").delete().eq("id", funnelId);
+
+    const newPosition = stages.filter(s => s.funnel_id === selectedFunnelId).length;
+
+    const { data, error } = await supabase
+      .from('stages')
+      .insert({ name: newStageName, funnel_id: selectedFunnelId, position: newPosition })
+      .select();
+
     if (error) {
-      console.error("Error deleting funnel:", error);
-      toast.error("Erro ao deletar funil.");
+      toast.error('Erro ao adicionar estágio: ' + error.message);
     } else {
-      setFunnels((prev) => prev.filter((f) => f.id !== funnelId));
-      setSelectedFunnel(null);
-      setStages([]);
-      toast.success("Funil deletado com sucesso!");
+      setStages([...stages, data[0]]);
+      setNewStageName('');
+      setIsAddStageDialogOpen(false);
+      toast.success('Estágio adicionado com sucesso!');
     }
   };
 
-  const handleCreateStage = async () => {
-    if (!newStageName.trim() || !selectedFunnel) {
-      toast.error("Nome do estágio e funil são obrigatórios.");
-      return;
-    }
-    const newPosition = stages.length > 0 ? Math.max(...stages.map(s => s.position)) + 1 : 0;
-    const { data, error } = await supabase
-      .from("stages")
-      .insert([{ name: newStageName, funnel_id: selectedFunnel, position: newPosition }])
-      .select();
-    if (error) {
-      console.error("Error creating stage:", error);
-      toast.error("Erro ao criar estágio.");
-    } else {
-      setStages((prev) => [...prev, { ...data[0], cards: [] }]);
-      setNewStageName("");
-      setIsStageModalOpen(false);
-      toast.success("Estágio criado com sucesso!");
-    }
+  const handleEditStage = (stage: Stage) => {
+    setSelectedStage(stage);
+    setNewStageName(stage.name); // Pre-fill the input with current stage name
+    setIsEditStageDialogOpen(true);
   };
 
   const handleUpdateStage = async () => {
-    if (!editingStage || !editingStage.name.trim()) {
-      toast.error("Nome do estágio não pode ser vazio.");
+    if (!selectedStage || !newStageName.trim()) {
+      toast.error('Nome do estágio não pode ser vazio.');
       return;
     }
+
     const { error } = await supabase
-      .from("stages")
-      .update({ name: editingStage.name })
-      .eq("id", editingStage.id);
+      .from('stages')
+      .update({ name: newStageName })
+      .eq('id', selectedStage.id);
+
     if (error) {
-      console.error("Error updating stage:", error);
-      toast.error("Erro ao atualizar estágio.");
+      toast.error('Erro ao atualizar estágio: ' + error.message);
     } else {
-      setStages((prev) =>
-        prev.map((s) => (s.id === editingStage.id ? { ...s, name: editingStage.name } : s))
-      );
-      setEditingStage(null);
-      setIsStageModalOpen(false);
-      toast.success("Estágio atualizado com sucesso!");
+      setStages(stages.map(s => s.id === selectedStage.id ? { ...s, name: newStageName } : s));
+      setIsEditStageDialogOpen(false);
+      setSelectedStage(null);
+      setNewStageName('');
+      toast.success('Estágio atualizado com sucesso!');
     }
   };
 
-  const handleDeleteStage = async (stageId: string) => {
-    if (!window.confirm("Tem certeza que deseja deletar este estágio e todos os seus cards?")) {
+  const handleDeleteStage = (stageId: string) => {
+    setStageToDeleteId(stageId);
+    setIsDeleteStageDialogOpen(true);
+  };
+
+  const confirmDeleteStage = async () => {
+    if (!stageToDeleteId) return;
+
+    const { error } = await supabase
+      .from('stages')
+      .delete()
+      .eq('id', stageToDeleteId);
+
+    if (error) {
+      toast.error('Erro ao excluir estágio: ' + error.message);
+    } else {
+      setStages(stages.filter(s => s.id !== stageToDeleteId));
+      setIsDeleteStageDialogOpen(false);
+      setStageToDeleteId(null);
+      toast.success('Estágio excluído com sucesso!');
+    }
+  };
+
+  const handleAddCard = (stageId: string) => {
+    setSelectedStageIdForCard(stageId);
+    setNewCardTitle(''); // Clear previous input
+    setIsAddCardDialogOpen(true);
+  };
+
+  const handleCreateCard = async () => {
+    if (!newCardTitle.trim() || !selectedStageIdForCard) {
+      toast.error('Título do card e estágio são obrigatórios.');
       return;
     }
-    const { error } = await supabase.from("stages").delete().eq("id", stageId);
+
+    const { data, error } = await supabase
+      .from('cards')
+      .insert({ title: newCardTitle, stage_id: selectedStageIdForCard })
+      .select();
+
     if (error) {
-      console.error("Error deleting stage:", error);
-      toast.error("Erro ao deletar estágio.");
+      toast.error('Erro ao adicionar card: ' + error.message);
     } else {
-      setStages((prev) => prev.filter((s) => s.id !== stageId));
-      toast.success("Estágio deletado com sucesso!");
+      setCards([...cards, data[0]]);
+      setNewCardTitle('');
+      setIsAddCardDialogOpen(false);
+      setSelectedStageIdForCard(null);
+      toast.success('Card adicionado com sucesso!');
     }
   };
 
-  const handleOpenCardModal = (stageId: string, card?: Card) => {
-    setCurrentStageIdForCard(stageId);
-    if (card) {
-      setEditingCard(card);
-      setCardForm({
-        ...card,
-        // Ensure tasks is an array, even if null/undefined from DB
-        tasks: card.tasks || [],
-        // Convert closed_at to Date object if it exists for Calendar component
-        closed_at: card.closed_at ? format(new Date(card.closed_at), 'yyyy-MM-dd') : undefined,
+  const onDragEnd = async (result: DropResult) => {
+    const { destination, source, draggableId, type } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    if (type === 'stage') {
+      const newStages = Array.from(stages);
+      const [movedStage] = newStages.splice(source.index, 1);
+      newStages.splice(destination.index, 0, movedStage);
+
+      setStages(newStages);
+
+      // Update positions in DB
+      newStages.forEach(async (stage, index) => {
+        if (stage.position !== index) {
+          await supabase.from('stages').update({ position: index }).eq('id', stage.id);
+        }
       });
-    } else {
-      setEditingCard(null);
-      setCardForm({ tasks: [] });
-    }
-    setIsCardModalOpen(true);
-  };
-
-  const handleSaveCard = async () => {
-    if (!cardForm.title?.trim() || !currentStageIdForCard) {
-      toast.error("Título do card e estágio são obrigatórios.");
       return;
     }
 
-    const cardDataToSave = {
-      ...cardForm,
-      stage_id: currentStageIdForCard,
-      // Convert camelCase to snake_case for Supabase
-      company_name: cardForm.company_name, // Already snake_case if from DB, but good to be explicit
-      business_type: cardForm.business_type, // Corrected from businessType
-      closed_at: cardForm.closed_at, // Already snake_case if from DB, but good to be explicit
-      tasks: cardForm.tasks, // tasks is already JSONB, so it's fine
-    };
+    if (type === 'card') {
+      const startStage = stages.find(s => s.id === source.droppableId);
+      const endStage = stages.find(s => s.id === destination.droppableId);
 
-    if (editingCard) {
-      const { error } = await supabase
-        .from("cards")
-        .update(cardDataToSave)
-        .eq("id", editingCard.id);
-      if (error) {
-        console.error("Error updating card:", error);
-        toast.error("Erro ao atualizar card.");
-      } else {
-        toast.success("Card atualizado com sucesso!");
-      }
-    } else {
-      const { error } = await supabase
-        .from("cards")
-        .insert([cardDataToSave]);
-      if (error) {
-        console.error("Error creating card:", error);
-        toast.error("Erro ao criar card.");
-      } else {
-        toast.success("Card criado com sucesso!");
-      }
-    }
-    setIsCardModalOpen(false);
-    fetchStagesAndCards(); // Refresh data
-  };
+      if (!startStage || !endStage) return;
 
-  const handleDeleteCard = async (cardId: string) => {
-    if (!window.confirm("Tem certeza que deseja deletar este card?")) {
+      const newCards = Array.from(cards);
+      const movedCardIndex = newCards.findIndex(card => card.id === draggableId);
+      if (movedCardIndex === -1) return;
+
+      const movedCard = newCards[movedCardIndex];
+
+      // Update card's stage_id
+      movedCard.stage_id = endStage.id;
+
+      setCards(newCards);
+
+      // Update in DB
+      const { error } = await supabase
+        .from('cards')
+        .update({ stage_id: endStage.id })
+        .eq('id', movedCard.id);
+
+      if (error) {
+        toast.error('Erro ao mover card: ' + error.message);
+      }
       return;
     }
-    const { error } = await supabase.from("cards").delete().eq("id", cardId);
-    if (error) {
-      console.error("Error deleting card:", error);
-      toast.error("Erro ao deletar card.");
-    } else {
-      toast.success("Card deletado com sucesso!");
-      fetchStagesAndCards(); // Refresh data
-    }
   };
 
-  const handleAddTask = () => {
-    if (newTaskText.trim()) {
-      const newTask: Task = {
-        id: Math.random().toString(36).substring(2, 11), // Simple unique ID for frontend
-        text: newTaskText,
-        completed: false,
-        due_date: newTaskDueDate ? format(newTaskDueDate, 'yyyy-MM-dd') : undefined,
-        priority: newTaskPriority,
-      };
-      setCardForm((prev) => ({
-        ...prev,
-        tasks: [...(prev.tasks || []), newTask],
-      }));
-      setNewTaskText("");
-      setNewTaskDueDate(undefined);
-      setNewTaskPriority('medium');
-    }
-  };
-
-  const handleRemoveTask = (taskId: string) => {
-    setCardForm((prev) => ({
-      ...prev,
-      tasks: (prev.tasks || []).filter((task) => task.id !== taskId),
-    }));
-  };
-
-  const handleToggleTaskCompletion = (taskId: string) => {
-    setCardForm((prev) => ({
-      ...prev,
-      tasks: (prev.tasks || []).map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      ),
-    }));
-  };
-
-  const onDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over) return;
-
-    if (active.id === over.id) return;
-
-    // Dragging a card
-    if (active.data.current?.type === "Card" && over.data.current?.type === "Card") {
-      const oldStageId = active.data.current?.stageId;
-      const newStageId = over.data.current?.stageId;
-
-      if (oldStageId === newStageId) {
-        // Reordering within the same stage
-        setStages((prevStages) =>
-          prevStages.map((stage) => {
-            if (stage.id === oldStageId) {
-              const oldIndex = stage.cards.findIndex((card) => card.id === active.id);
-              const newIndex = stage.cards.findIndex((card) => card.id === over.id);
-              return {
-                ...stage,
-                cards: arrayMove(stage.cards, oldIndex, newIndex),
-              };
-            }
-            return stage;
-          })
-        );
-      } else {
-        // Moving card to a different stage
-        const movedCard = stages
-          .find((s) => s.id === oldStageId)
-          ?.cards.find((c) => c.id === active.id);
-
-        if (movedCard) {
-          setStages((prevStages) =>
-            prevStages.map((stage) => {
-              if (stage.id === oldStageId) {
-                return {
-                  ...stage,
-                  cards: stage.cards.filter((card) => card.id !== active.id),
-                };
-              } else if (stage.id === newStageId) {
-                const overIndex = stage.cards.findIndex((card) => card.id === over.id);
-                const newCards = [...stage.cards];
-                newCards.splice(overIndex !== -1 ? overIndex : newCards.length, 0, {
-                  ...movedCard,
-                  stage_id: newStageId,
-                });
-                return {
-                  ...stage,
-                  cards: newCards,
-                };
-              }
-              return stage;
-            })
-          );
-
-          // Update card's stage_id in Supabase
-          const { error } = await supabase
-            .from("cards")
-            .update({ stage_id: newStageId })
-            .eq("id", active.id);
-          if (error) {
-            console.error("Error updating card stage:", error);
-            toast.error("Erro ao mover card.");
-            fetchStagesAndCards(); // Revert on error
-          } else {
-            toast.success("Card movido com sucesso!");
-          }
-        }
-      }
-    }
-    // Dragging a card to an empty stage
-    else if (active.data.current?.type === "Card" && over.data.current?.type === "Stage") {
-      const oldStageId = active.data.current?.stageId;
-      const newStageId = over.id as string;
-
-      const movedCard = stages
-        .find((s) => s.id === oldStageId)
-        ?.cards.find((c) => c.id === active.id);
-
-      if (movedCard) {
-        setStages((prevStages) =>
-          prevStages.map((stage) => {
-            if (stage.id === oldStageId) {
-              return {
-                ...stage,
-                cards: stage.cards.filter((card) => card.id !== active.id),
-              };
-            } else if (stage.id === newStageId) {
-              return {
-                ...stage,
-                cards: [...stage.cards, { ...movedCard, stage_id: newStageId }],
-              };
-            }
-            return stage;
-          })
-        );
-
-        const { error } = await supabase
-          .from("cards")
-          .update({ stage_id: newStageId })
-          .eq("id", active.id);
-        if (error) {
-          console.error("Error updating card stage:", error);
-          toast.error("Erro ao mover card.");
-          fetchStagesAndCards(); // Revert on error
-        } else {
-          toast.success("Card movido com sucesso!");
-        }
-      }
-    }
-    // Dragging a stage
-    else if (active.data.current?.type === "Stage" && over.data.current?.type === "Stage") {
-      const oldIndex = stages.findIndex((stage) => stage.id === active.id);
-      const newIndex = stages.findIndex((stage) => stage.id === over.id);
-
-      const newStagesOrder = arrayMove(stages, oldIndex, newIndex);
-      setStages(newStagesOrder);
-
-      // Update positions in Supabase
-      for (let i = 0; i < newStagesOrder.length; i++) {
-        const stage = newStagesOrder[i];
-        if (stage.position !== i) {
-          const { error } = await supabase
-            .from("stages")
-            .update({ position: i })
-            .eq("id", stage.id);
-          if (error) {
-            console.error("Error updating stage position:", error);
-            toast.error("Erro ao reordenar estágios.");
-            fetchStagesAndCards(); // Revert on error
-            break;
-          }
-        }
-      }
-      toast.success("Estágios reordenados com sucesso!");
-    }
-  };
+  const filteredStages = stages.filter(stage => stage.funnel_id === selectedFunnelId);
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 p-4">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gerenciamento de Funis</h1>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Gerenciamento de Funis</h1>
 
-      <div className="flex items-center space-x-4 mb-6">
-        <Select
-          value={selectedFunnel || ""}
-          onValueChange={(value) => setSelectedFunnel(value)}
+      <div className="mb-6 flex items-center space-x-4">
+        <select
+          value={selectedFunnelId || ''}
+          onChange={(e) => setSelectedFunnelId(e.target.value)}
+          className="p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
         >
-          <SelectTrigger className="w-[200px] bg-white">
-            <SelectValue placeholder="Selecione um Funil" />
-          </SelectTrigger>
-          <SelectContent>
-            {funnels.map((funnel) => (
-              <SelectItem key={funnel.id} value={funnel.id}>
-                {funnel.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button onClick={() => setIsFunnelModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
-          <PlusCircle className="mr-2 h-4 w-4" /> Novo Funil
+          {funnels.map((funnel) => (
+            <option key={funnel.id} value={funnel.id}>
+              {funnel.name}
+            </option>
+          ))}
+        </select>
+        <Button onClick={() => setIsAddFunnelDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Funil
         </Button>
-        {selectedFunnel && (
-          <Button
-            variant="destructive"
-            onClick={() => handleDeleteFunnel(selectedFunnel)}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            <Trash2 className="mr-2 h-4 w-4" /> Deletar Funil
+        {selectedFunnelId && (
+          <Button onClick={() => setIsAddStageDialogOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white">
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Estágio
           </Button>
         )}
       </div>
 
-      {selectedFunnel && (
-        <div className="flex-1 overflow-auto">
-          <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
-            <div className="flex space-x-4 h-full items-start">
-              <SortableContext items={stages.map(s => s.id)} strategy={verticalListSortingStrategy}>
-                {stages.map((stage) => (
-                  <DraggableStage key={stage.id} id={stage.id} name={stage.name}>
-                    <div className="bg-white rounded-lg shadow-md p-4 w-80 flex-shrink-0 h-full flex flex-col">
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-semibold text-gray-700">{stage.name}</h2>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setEditingStage(stage);
-                              setNewStageName(stage.name);
-                              setIsStageModalOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4 text-gray-500" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteStage(stage.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+      {selectedFunnelId ? (
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="all-stages" direction="horizontal" type="stage">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex overflow-x-auto pb-4 custom-scrollbar"
+              >
+                {filteredStages.map((stage, index) => (
+                  <DraggableStage
+                    key={stage.id}
+                    stage={stage}
+                    index={index}
+                    onEditStage={handleEditStage}
+                    onDeleteStage={handleDeleteStage}
+                    onAddCard={handleAddCard}
+                  >
+                    <Droppable droppableId={stage.id} type="card">
+                      {(providedInner) => (
+                        <div
+                          ref={providedInner.innerRef}
+                          {...providedInner.droppableProps}
+                          className="min-h-[100px] flex-grow"
+                        >
+                          {cards
+                            .filter((card) => card.stage_id === stage.id)
+                            .map((card, cardIndex) => (
+                              <DraggableCard key={card.id} card={card} index={cardIndex} />
+                            ))}
+                          {providedInner.placeholder}
                         </div>
-                      </div>
-                      <div className="flex-1 overflow-y-auto space-y-3 pr-2 -mr-2">
-                        <SortableContext items={stage.cards.map(c => c.id)} strategy={verticalListSortingStrategy}>
-                          {stage.cards.map((card) => (
-                            <DraggableCard key={card.id} id={card.id} stageId={stage.id}>
-                              <ShadcnCard className="bg-gray-50 border border-gray-200 shadow-sm">
-                                <CardHeader className="pb-2">
-                                  <CardTitle className="text-lg">{card.title}</CardTitle>
-                                  <CardDescription className="text-sm text-gray-500">
-                                    {card.company_name} - {card.business_type}
-                                  </CardDescription>
-                                </CardHeader>
-                                <CardContent className="text-sm">
-                                  {card.value && <p className="font-medium text-green-600">Valor: R$ {card.value.toFixed(2)}</p>}
-                                  {card.description && <p className="text-gray-600 mt-1">{card.description}</p>}
-                                  {card.closed_at && <p className="text-gray-500 mt-1">Fechamento: {format(new Date(card.closed_at), 'dd/MM/yyyy')}</p>}
-                                  {card.tasks && card.tasks.length > 0 && (
-                                    <div className="mt-2">
-                                      <h4 className="font-semibold text-gray-700">Tarefas:</h4>
-                                      <ul className="list-disc list-inside text-gray-600">
-                                        {card.tasks.map((task) => (
-                                          <li key={task.id} className={`flex items-center ${task.completed ? 'line-through text-gray-400' : ''}`}>
-                                            <input
-                                              type="checkbox"
-                                              checked={task.completed}
-                                              onChange={() => handleToggleTaskCompletion(task.id)}
-                                              className="mr-2"
-                                            />
-                                            {task.text}
-                                            {task.due_date && <span className="ml-2 text-xs text-gray-500">({format(new Date(task.due_date), 'dd/MM')})</span>}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
-                                  <div className="flex justify-end space-x-2 mt-3">
-                                    <Button variant="ghost" size="sm" onClick={() => handleOpenCardModal(stage.id, card)}>
-                                      <Edit className="h-4 w-4 text-gray-500" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" onClick={() => handleDeleteCard(card.id)}>
-                                      <Trash2 className="h-4 w-4 text-red-500" />
-                                    </Button>
-                                  </div>
-                                </CardContent>
-                              </ShadcnCard>
-                            </DraggableCard>
-                          ))}
-                        </SortableContext>
-                      </div>
-                      <Button
-                        onClick={() => handleOpenCardModal(stage.id)}
-                        className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Card
-                      </Button>
-                    </div>
+                      )}
+                    </Droppable>
                   </DraggableStage>
                 ))}
-              </SortableContext>
-              <div className="w-80 flex-shrink-0">
-                <Button
-                  onClick={() => {
-                    setEditingStage(null);
-                    setNewStageName("");
-                    setIsStageModalOpen(true);
-                  }}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white h-full min-h-[150px] flex items-center justify-center flex-col border-2 border-dashed border-purple-300 rounded-lg"
-                >
-                  <PlusCircle className="h-8 w-8 mb-2" />
-                  Adicionar Estágio
-                </Button>
+                {provided.placeholder}
               </div>
-            </div>
-          </DndContext>
-        </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      ) : (
+        <p className="text-gray-600">Selecione um funil ou adicione um novo para começar.</p>
       )}
 
-      {/* Funnel Modal */}
-      <Dialog open={isFunnelModalOpen} onOpenChange={setIsFunnelModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Add Funnel Dialog */}
+      <Dialog open={isAddFunnelDialogOpen} onOpenChange={setIsAddFunnelDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo Funil</DialogTitle>
+            <DialogTitle>Adicionar Novo Funil</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="funnelName" className="text-right">
-                Nome
-              </Label>
-              <Input
-                id="funnelName"
-                value={newFunnelName}
-                onChange={(e) => setNewFunnelName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
+            <Label htmlFor="funnelName">Nome do Funil</Label>
+            <Input
+              id="funnelName"
+              value={newFunnelName}
+              onChange={(e) => setNewFunnelName(e.target.value)}
+              placeholder="Nome do Funil"
+            />
           </div>
           <DialogFooter>
-            <Button onClick={handleCreateFunnel}>Criar Funil</Button>
+            <Button variant="outline" onClick={() => setIsAddFunnelDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddFunnel}>Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Stage Modal */}
-      <Dialog open={isStageModalOpen} onOpenChange={setIsStageModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Add Stage Dialog */}
+      <Dialog open={isAddStageDialogOpen} onOpenChange={setIsAddStageDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingStage ? "Editar Estágio" : "Novo Estágio"}</DialogTitle>
+            <DialogTitle>Adicionar Novo Estágio</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="stageName" className="text-right">
-                Nome
-              </Label>
-              <Input
-                id="stageName"
-                value={newStageName}
-                onChange={(e) => setNewStageName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
+            <Label htmlFor="stageName">Nome do Estágio</Label>
+            <Input
+              id="stageName"
+              value={newStageName}
+              onChange={(e) => setNewStageName(e.target.value)}
+              placeholder="Nome do Estágio"
+            />
           </div>
           <DialogFooter>
-            <Button onClick={editingStage ? handleUpdateStage : handleCreateStage}>
-              {editingStage ? "Salvar Alterações" : "Criar Estágio"}
-            </Button>
+            <Button variant="outline" onClick={() => setIsAddStageDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddStage}>Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Card Modal */}
-      <Dialog open={isCardModalOpen} onOpenChange={setIsCardModalOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      {/* Edit Stage Dialog */}
+      <Dialog open={isEditStageDialogOpen} onOpenChange={setIsEditStageDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCard ? "Editar Card" : "Novo Card"}</DialogTitle>
+            <DialogTitle>Editar Estágio</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="title" className="text-right">
-                Título
-              </Label>
-              <Input
-                id="title"
-                value={cardForm.title || ""}
-                onChange={(e) => setCardForm({ ...cardForm, title: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Descrição
-              </Label>
-              <Textarea
-                id="description"
-                value={cardForm.description || ""}
-                onChange={(e) => setCardForm({ ...cardForm, description: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="value" className="text-right">
-                Valor
-              </Label>
-              <Input
-                id="value"
-                type="number"
-                value={cardForm.value || ""}
-                onChange={(e) => setCardForm({ ...cardForm, value: parseFloat(e.target.value) })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="source" className="text-right">
-                Origem
-              </Label>
-              <Input
-                id="source"
-                value={cardForm.source || ""}
-                onChange={(e) => setCardForm({ ...cardForm, source: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="company_name" className="text-right">
-                Empresa
-              </Label>
-              <Input
-                id="company_name"
-                value={cardForm.company_name || ""}
-                onChange={(e) => setCardForm({ ...cardForm, company_name: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="business_type" className="text-right">
-                Tipo de Negócio
-              </Label>
-              <Input
-                id="business_type"
-                value={cardForm.business_type || ""}
-                onChange={(e) => setCardForm({ ...cardForm, business_type: e.target.value })}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="closed_at" className="text-right">
-                Data de Fechamento
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={`w-full justify-start text-left font-normal ${!cardForm.closed_at && "text-muted-foreground"
-                      } col-span-3`}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {cardForm.closed_at ? format(new Date(cardForm.closed_at), "PPP") : <span>Selecione a data</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={cardForm.closed_at ? new Date(cardForm.closed_at) : undefined}
-                    onSelect={(date) => setCardForm({ ...cardForm, closed_at: date ? format(date, 'yyyy-MM-dd') : undefined })}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Tasks Section */}
-            <div className="col-span-4">
-              <h3 className="text-lg font-semibold mb-2">Tarefas</h3>
-              <div className="space-y-2">
-                {(cardForm.tasks || []).map((task) => (
-                  <div key={task.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={task.completed}
-                        onChange={() => handleToggleTaskCompletion(task.id)}
-                        className="mr-2"
-                      />
-                      <span className={`${task.completed ? 'line-through text-gray-500' : ''}`}>
-                        {task.text}
-                        {task.due_date && <span className="ml-2 text-xs text-gray-500">({format(new Date(task.due_date), 'dd/MM/yyyy')})</span>}
-                        {task.priority && <span className={`ml-2 text-xs font-medium ${task.priority === 'high' ? 'text-red-600' : task.priority === 'medium' ? 'text-yellow-600' : 'text-green-600'}`}>({task.priority})</span>}
-                      </span>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleRemoveTask(task.id)}>
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center space-x-2 mt-4">
-                <Input
-                  placeholder="Nova tarefa"
-                  value={newTaskText}
-                  onChange={(e) => setNewTaskText(e.target.value)}
-                  className="flex-1"
-                />
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant={"outline"} className="w-auto justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newTaskDueDate ? format(newTaskDueDate, "PPP") : <span>Data de Vencimento</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={newTaskDueDate}
-                      onSelect={setNewTaskDueDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Select value={newTaskPriority} onValueChange={(value) => setNewTaskPriority(value as 'low' | 'medium' | 'high')}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="Prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleAddTask}>Adicionar</Button>
-              </div>
-            </div>
+            <Label htmlFor="editStageName">Nome do Estágio</Label>
+            <Input
+              id="editStageName"
+              value={newStageName}
+              onChange={(e) => setNewStageName(e.target.value)}
+              placeholder="Nome do Estágio"
+            />
           </div>
           <DialogFooter>
-            <Button onClick={handleSaveCard}>Salvar Card</Button>
+            <Button variant="outline" onClick={() => setIsEditStageDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleUpdateStage}>Salvar Alterações</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Stage Confirmation Dialog */}
+      <Dialog open={isDeleteStageDialogOpen} onOpenChange={setIsDeleteStageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <p>Tem certeza de que deseja excluir este estágio? Todos os cards associados também serão excluídos.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteStageDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDeleteStage}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Card Dialog */}
+      <Dialog open={isAddCardDialogOpen} onOpenChange={setIsAddCardDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Card</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Label htmlFor="cardTitle">Título do Card</Label>
+            <Input
+              id="cardTitle"
+              value={newCardTitle}
+              onChange={(e) => setNewCardTitle(e.target.value)}
+              placeholder="Título do Card"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddCardDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateCard}>Adicionar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-}
+};
+
+export default Funnels;

@@ -1,35 +1,37 @@
 "use client";
 
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { Draggable } from '@hello-pangea/dnd';
+import { Card as ShadcnCard, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card as CardType } from '../types/index'; // Caminho de importação ajustado
 
 interface DraggableCardProps {
-  id: string;
-  stageId: string;
-  children: React.ReactNode;
+  card: CardType;
+  index: number;
 }
 
-export function DraggableCard({ id, stageId, children }: DraggableCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, data: { type: 'Card', stageId } });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 100 : 'auto',
-    opacity: isDragging ? 0.5 : 1,
-  };
-
+const DraggableCard: React.FC<DraggableCardProps> = ({ card, index }) => {
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {children}
-    </div>
+    <Draggable draggableId={card.id} index={index}>
+      {(provided) => (
+        <ShadcnCard
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className="mb-3 bg-white shadow-sm rounded-lg border border-gray-200"
+        >
+          <CardHeader className="p-3 pb-0">
+            <CardTitle className="text-sm font-medium text-gray-800">{card.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 pt-1 text-xs text-gray-600">
+            {card.description && <p className="mb-1">{card.description}</p>}
+            {card.value && <p className="font-semibold">Valor: R$ {card.value.toFixed(2)}</p>}
+            {card.company_name && <p>Empresa: {card.company_name}</p>}
+          </CardContent>
+        </ShadcnCard>
+      )}
+    </Draggable>
   );
-}
+};
+
+export default DraggableCard;
