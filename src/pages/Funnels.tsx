@@ -6,27 +6,36 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { PlusCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import DraggableStage from '@/components/DraggableStage';
 import DraggableCard from '@/components/DraggableCard';
-import { Funnel, Stage, Card as CardType } from '../types/index'; // Caminho de importação ajustado
+import { Funnel, Stage, Card as CardType, Contact } from '../types';
 
 const Funnels: React.FC = () => {
   const [funnels, setFunnels] = useState<Funnel[]>([]);
   const [stages, setStages] = useState<Stage[]>([]);
   const [cards, setCards] = useState<CardType[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+
   const [newFunnelName, setNewFunnelName] = useState('');
   const [isAddFunnelDialogOpen, setIsAddFunnelDialogOpen] = useState(false);
+
   const [isAddStageDialogOpen, setIsAddStageDialogOpen] = useState(false);
   const [newStageName, setNewStageName] = useState('');
+
   const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null);
+
   const [isEditStageDialogOpen, setIsEditStageDialogOpen] = useState(false);
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
+
   const [isAddCardDialogOpen, setIsAddCardDialogOpen] = useState(false);
   const [selectedStageIdForCard, setSelectedStageIdForCard] = useState<string | null>(null);
   const [newCardTitle, setNewCardTitle] = useState('');
+  const [selectedContactId, setSelectedContactId] = useState<string | undefined>(undefined);
+
   const [isDeleteStageDialogOpen, setIsDeleteStageDialogOpen] = useState(false);
   const [stageToDeleteId, setStageToDeleteId] = useState<string | null>(null);
 
@@ -34,6 +43,7 @@ const Funnels: React.FC = () => {
     fetchFunnels();
     fetchStages();
     fetchCards();
+    fetchContacts();
   }, []);
 
   const fetchFunnels = async () => {
@@ -66,6 +76,15 @@ const Funnels: React.FC = () => {
     }
   };
 
+  const fetchContacts = async () => {
+    const { data, error } = await supabase.from('contacts').select('*').order('name', { ascending: true });
+    if (error) {
+      toast.error('Erro ao carregar contatos: ' + error.message);
+    } else {
+      setContacts(data);
+    }
+  };
+
   const handleAddFunnel = async () => {
     if (!newFunnelName.trim()) {
       toast.error('O nome do funil não pode ser vazio.');
@@ -74,7 +93,7 @@ const Funnels: React.FC = () => {
     const { data, error } = await supabase.from('funnels').insert({ name: newFunnelName }).select();
     if (error) {
       toast.error('Erro ao adicionar funil: ' + error.message);
-    } else {
+    } else if (data && data.length > 0) {
       setFunnels([...funnels, data[0]]);
       setNewFunnelName('');
       setIsAddFunnelDialogOpen(false);
@@ -97,7 +116,7 @@ const Funnels: React.FC = () => {
 
     if (error) {
       toast.error('Erro ao adicionar estágio: ' + error.message);
-    } else {
+    } else if (data && data.length > 0) {
       setStages([...stages, data[0]]);
       setNewStageName('');
       setIsAddStageDialogOpen(false);
@@ -107,7 +126,7 @@ const Funnels: React.FC = () => {
 
   const handleEditStage = (stage: Stage) => {
     setSelectedStage(stage);
-    setNewStageName(stage.name); // Pre-fill the input with current stage name
+    setNewStageName(stage.name);
     setIsEditStageDialogOpen(true);
   };
 
@@ -125,7 +144,7 @@ const Funnels: React.FC = () => {
     if (error) {
       toast.error('Erro ao atualizar estágio: ' + error.message);
     } else {
-      setStages(stages.map(s => s.id === selectedStage.id ? { ...s, name: newStageName } : s));
+      setStages(stages.map(s => (s.id === selectedStage.id ? { ...s, name: newStageName } : s)));
       setIsEditStageDialogOpen(false);
       setSelectedStage(null);
       setNewStageName('');
@@ -141,10 +160,7 @@ const Funnels: React.FC = () => {
   const confirmDeleteStage = async () => {
     if (!stageToDeleteId) return;
 
-    const { error } = await supabase
-      .from('stages')
-      .delete()
-      .eq('id', stageToDeleteId);
+    const { error } = await supabase.from('stages').delete().eq('id', stageToDeleteId);
 
     if (error) {
       toast.error('Erro ao excluir estágio: ' + error.message);
@@ -158,7 +174,8 @@ const Funnels: React.FC = () => {
 
   const handleAddCard = (stageId: string) => {
     setSelectedStageIdForCard(stageId);
-    setNewCardTitle(''); // Clear previous input
+    setNewCardTitle('');
+    setSelectedContactId(undefined);
     setIsAddCardDialogOpen(true);
   };
 
@@ -168,16 +185,20 @@ const Funnels: React.FC = () => {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('cards')
-      .insert({ title: newCardTitle, stage_id: selectedStageIdForCard })
-      .select();
+    const payload: Partial<CardType> = {
+      title: newCardTitle,
+      stage_id: selectedStageIdForCard,
+      contact_id: selectedContactId || null,
+    };
+
+    const { data, error } = await supabase.from('cards').insert(payload).select();
 
     if (error) {
       toast.error('Erro ao adicionar card: ' + error.message);
-    } else {
+    } else if (data && data.length > 0) {
       setCards([...cards, data[0]]);
       setNewCardTitle('');
+      setSelectedContactId(undefined);
       setIsAddCardDialogOpen(false);
       setSelectedStageIdForCard(null);
       toast.success('Card adicionado com sucesso!');
@@ -187,25 +208,15 @@ const Funnels: React.FC = () => {
   const onDragEnd = async (result: DropResult) => {
     const { destination, source, draggableId, type } = result;
 
-    if (!destination) {
-      return;
-    }
-
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
     if (type === 'stage') {
       const newStages = Array.from(stages);
       const [movedStage] = newStages.splice(source.index, 1);
       newStages.splice(destination.index, 0, movedStage);
-
       setStages(newStages);
 
-      // Update positions in DB
       newStages.forEach(async (stage, index) => {
         if (stage.position !== index) {
           await supabase.from('stages').update({ position: index }).eq('id', stage.id);
@@ -215,36 +226,26 @@ const Funnels: React.FC = () => {
     }
 
     if (type === 'card') {
-      const startStage = stages.find(s => s.id === source.droppableId);
       const endStage = stages.find(s => s.id === destination.droppableId);
-
-      if (!startStage || !endStage) return;
+      if (!endStage) return;
 
       const newCards = Array.from(cards);
       const movedCardIndex = newCards.findIndex(card => card.id === draggableId);
       if (movedCardIndex === -1) return;
 
       const movedCard = newCards[movedCardIndex];
-
-      // Update card's stage_id
       movedCard.stage_id = endStage.id;
-
       setCards(newCards);
 
-      // Update in DB
-      const { error } = await supabase
-        .from('cards')
-        .update({ stage_id: endStage.id })
-        .eq('id', movedCard.id);
-
-      if (error) {
-        toast.error('Erro ao mover card: ' + error.message);
-      }
+      const { error } = await supabase.from('cards').update({ stage_id: endStage.id }).eq('id', movedCard.id);
+      if (error) toast.error('Erro ao mover card: ' + error.message);
       return;
     }
   };
 
   const filteredStages = stages.filter(stage => stage.funnel_id === selectedFunnelId);
+
+  const contactNameById = new Map(contacts.map(c => [c.id, c.name]));
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -300,7 +301,12 @@ const Funnels: React.FC = () => {
                           {cards
                             .filter((card) => card.stage_id === stage.id)
                             .map((card, cardIndex) => (
-                              <DraggableCard key={card.id} card={card} index={cardIndex} />
+                              <DraggableCard
+                                key={card.id}
+                                card={card}
+                                index={cardIndex}
+                                contactName={card.contact_id ? contactNameById.get(card.contact_id) : undefined}
+                              />
                             ))}
                           {providedInner.placeholder}
                         </div>
@@ -323,7 +329,7 @@ const Funnels: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Novo Funil</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-2 py-4">
             <Label htmlFor="funnelName">Nome do Funil</Label>
             <Input
               id="funnelName"
@@ -345,7 +351,7 @@ const Funnels: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Novo Estágio</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-2 py-4">
             <Label htmlFor="stageName">Nome do Estágio</Label>
             <Input
               id="stageName"
@@ -367,7 +373,7 @@ const Funnels: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Editar Estágio</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-2 py-4">
             <Label htmlFor="editStageName">Nome do Estágio</Label>
             <Input
               id="editStageName"
@@ -403,14 +409,31 @@ const Funnels: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Adicionar Novo Card</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Label htmlFor="cardTitle">Título do Card</Label>
-            <Input
-              id="cardTitle"
-              value={newCardTitle}
-              onChange={(e) => setNewCardTitle(e.target.value)}
-              placeholder="Título do Card"
-            />
+          <div className="grid gap-3 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="cardTitle">Título do Card</Label>
+              <Input
+                id="cardTitle"
+                value={newCardTitle}
+                onChange={(e) => setNewCardTitle(e.target.value)}
+                placeholder="Título do Card"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Contato (opcional)</Label>
+              <Select value={selectedContactId} onValueChange={(v) => setSelectedContactId(v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione um contato" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  {contacts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.company ? `• ${c.company}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddCardDialogOpen(false)}>Cancelar</Button>
